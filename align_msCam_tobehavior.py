@@ -81,19 +81,23 @@ def align_and_return_ezTrack(tracking_df, timestamps_df_path, CNMFE_frame_range)
 	# this produces a data frame with frame by frame tracking info from ezTrack 
 	behav_trimmed['Distance'] = np.array(tracking_df['Distance'])
 
-	# add following parameters to msCam data frame
-	sys_clocks_behavCam = [0]
-	behavCam_frames = [1]
-	msCam_frames = [1]
-	dist_btw_frames = [0]
-	velocity = [0]
-
 	#first and last frame to align from CNMFE data
 	first_frame = CNMFE_frame_range[0]
 	final_frame = CNMFE_frame_range[1]
+	
+	# reset initial clock value to 0 
+	msCam_timestamps['sysClock'][1] = 0
+	behav_trimmed['sysClock'][1] = 0
+	
+	# add following parameters to msCam data frame
+	sys_clocks_behavCam = []
+	behavCam_frames = []
+	msCam_frames = []
+	dist_btw_frames = []
+	velocity = []
 
 	# need to check alignemnt of new series here
-	for msCam_frame in tqdm(range(first_frame+2, final_frame+1)):
+	for msCam_frame in tqdm(range(first_frame, final_frame+1)):
 		#get sys clock time of each miniscope recorded frame
 		#find closest behav cam frame by sys clock time, 
 		sys_clock_msCam = msCam_timestamps['sysClock'].loc[msCam_frame]
@@ -104,10 +108,13 @@ def align_and_return_ezTrack(tracking_df, timestamps_df_path, CNMFE_frame_range)
 		delta_d = behav_trimmed.loc[behavCam_frame]['Distance']
 		dist_btw_frames.append(delta_d)
 		#velocity is the difference in the distance between frames divived by the sysClcok difference
-		delta_t = behav_trimmed.loc[behavCam_frame]['sysClock']-behav_trimmed.loc[behavCam_frame-1]['sysClock']
+		if behavCam_frame-1 == 0:
+			# use average framerate of 33msec to calculate initial velcoity 
+			delta_t=33
+		else:
+			delta_t = behav_trimmed.loc[behavCam_frame]['sysClock']-behav_trimmed.loc[behavCam_frame-1]['sysClock']
 		velocity.append(delta_d/(delta_t/1000))
-	# reset initial clock value to 0 
-	msCam_timestamps['sysClock'][1] = 0
+
 	# add final values to df
 	msCam_timestamps['velocity'] = velocity
 	msCam_timestamps['Distance'] = dist_btw_frames

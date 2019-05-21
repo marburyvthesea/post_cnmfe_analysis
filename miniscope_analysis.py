@@ -1,7 +1,7 @@
 
 
 import scipy.io as sio
-import pandas as pandas
+import pandas as pd
 
 import sys
 sys.path.append('/Users/johnmarshall/caiman_data/post_cnmfe_analysis')
@@ -24,14 +24,17 @@ class miniscope_session(object):
 		self.aligned_to_behavior = None 
 
 
-	def align_to_eztrackoutput(path_to_eztrackfile, miniscope_time_stamp_file, location_files, max):
+	def align_to_eztrackoutput(self, miniscope_time_stamp_file, location_files, frame_range):
+
 		dfs = []
 		
 		for file in location_files:
 			dfs.append(pd.read_csv(file, usecols=[1,9,10,11]))
 
-		tracking_concactenated = pd.concat(dfs)
-		self.aligned_to_behavior = align_tracking.align_and_return_ezTrack(tracking_concacted, miniscope_time_stamp_file, 26000)
+		tracking_concacted = pd.concat(dfs)
+
+		self.aligned_to_behavior = align_tracking.align_and_return_ezTrack(pd.concat(dfs), miniscope_time_stamp_file, frame_range)
+		
 		return()
 
 
