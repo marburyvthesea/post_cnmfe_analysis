@@ -27,7 +27,6 @@ def count_events_in_array_threshold(selection, Fs, time_to_wait, threshold=0, up
 	dt -- sampling interval
 	threshold -- (optional) detection threshold (default = 0).
 	up -- (optional) True (default) will look for upward events, False downwards.
-
 	Returns:
 	An integer with the number of events.
 	Examples:
@@ -68,12 +67,12 @@ def count_events_in_array_threshold(selection, Fs, time_to_wait, threshold=0, up
 
 	return (EventCounter, sample_points)
 
-def align_and_return_ezTrack(tracking_df, timestamps_df_path, length_CNMFE_data):
+def align_and_return_ezTrack(tracking_df, timestamps_df_path, CNMFE_frame_range):
 
 	timestamps_df = pd.read_table(timestamps_df_path)
 
 	# timestamps of msCam and behavCam
-	msCam_timestamps = timestamps_df[timestamps_df['camNum'] == 0].set_index('frameNum')[0:length_CNMFE_data]
+	msCam_timestamps = timestamps_df[timestamps_df['camNum'] == 0].set_index('frameNum')[CNMFE_frame_range[0]:CNMFE_frame_range[1]]
 	behavCam_timestamps = timestamps_df[timestamps_df['camNum'] == 1].set_index('frameNum')
 
 	# length to align is length of tracking df
@@ -89,8 +88,12 @@ def align_and_return_ezTrack(tracking_df, timestamps_df_path, length_CNMFE_data)
 	dist_btw_frames = [0]
 	velocity = [0]
 
+	#first and last frame to align from CNMFE data
+	first_frame = CNMFE_frame_range[0]
+	final_frame = CNMFE_frame_range[1]
+
 	# need to check alignemnt of new series here
-	for msCam_frame in tqdm(range(2, length_CNMFE_data+1)):
+	for msCam_frame in tqdm(range(first_frame+2, final_frame+1)):
 		#get sys clock time of each miniscope recorded frame
 		#find closest behav cam frame by sys clock time, 
 		sys_clock_msCam = msCam_timestamps['sysClock'].loc[msCam_frame]
