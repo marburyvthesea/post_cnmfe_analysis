@@ -72,7 +72,7 @@ def align_and_return_ezTrack(tracking_df, timestamps_df_path, CNMFE_frame_range)
 	timestamps_df = pd.read_table(timestamps_df_path)
 
 	# timestamps of msCam and behavCam
-	msCam_timestamps = timestamps_df[timestamps_df['camNum'] == 0].set_index('frameNum')[CNMFE_frame_range[0]:CNMFE_frame_range[1]]
+	msCam_timestamps = timestamps_df[timestamps_df['camNum'] == 0].set_index('frameNum')[CNMFE_frame_range[0]-1:CNMFE_frame_range[1]]
 	behavCam_timestamps = timestamps_df[timestamps_df['camNum'] == 1].set_index('frameNum')
 
 	# length to align is length of tracking df
@@ -89,6 +89,9 @@ def align_and_return_ezTrack(tracking_df, timestamps_df_path, CNMFE_frame_range)
 	msCam_timestamps['sysClock'][1] = 0
 	behav_trimmed['sysClock'][1] = 0
 	
+	print(msCam_timestamps.head())
+	print(msCam_timestamps['sysClock'].loc[CNMFE_frame_range[0]])
+
 	# add following parameters to msCam data frame
 	sys_clocks_behavCam = []
 	behavCam_frames = []
@@ -97,10 +100,12 @@ def align_and_return_ezTrack(tracking_df, timestamps_df_path, CNMFE_frame_range)
 	velocity = []
 
 	# need to check alignemnt of new series here
-	for msCam_frame in tqdm(range(first_frame, final_frame+1)):
+	for msCam_frame in range(first_frame, final_frame+1):
 		#get sys clock time of each miniscope recorded frame
 		#find closest behav cam frame by sys clock time, 
+		print(msCam_frame)
 		sys_clock_msCam = msCam_timestamps['sysClock'].loc[msCam_frame]
+		print(sys_clock_msCam)
 		msCam_frames.append(list(msCam_timestamps.loc[msCam_timestamps['sysClock'] == sys_clock_msCam].index)[0])
 		behavCam_frame = list(behav_trimmed.iloc[(behav_trimmed['sysClock']-sys_clock_msCam).abs().argsort()[:1]].index)[0]
 		behavCam_frames.append(behavCam_frame)

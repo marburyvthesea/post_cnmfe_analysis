@@ -33,7 +33,7 @@ class miniscope_session(object):
 
 		tracking_concacted = pd.concat(dfs)
 
-		self.aligned_to_behavior = align_tracking.align_and_return_ezTrack(pd.concat(dfs), miniscope_time_stamp_file, frame_range)
+		self.aligned_to_behavior = align_tracking.align_and_return_ezTrack(tracking_concacted, miniscope_time_stamp_file, frame_range)
 		
 		return()
 
