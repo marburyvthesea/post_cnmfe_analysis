@@ -17,6 +17,22 @@ import scipy.sparse as sparse
 import numpy as np
 
 
+def binning_function(bin_increment_samples, z_scored_cell, z_score_threshold):
+    bin_start = 0
+    bin_end = bin_increment_samples
+    binned = []
+    #time_index = []
+    while bin_end < len(z_scored_cell):
+        if np.any(z_scored_cell[bin_start:bin_end]>z_score_threshold):
+            binned.append(1)
+        else:
+            binned.append(0)
+        #time_index.append(bin_start)
+        bin_start += bin_increment_samples
+        bin_end += bin_increment_samples
+    return(np.array(binned))
+
+
 def normalize(trace, percentile=True):
     """ Normalize a fluorescence trace by its max or its 99th percentile. """
     trace = trace - np.min(trace)
