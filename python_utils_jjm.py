@@ -15,6 +15,19 @@ from past.utils import old_div
 from matplotlib import pyplot as plt
 import scipy.sparse as sparse
 import numpy as np
+import miniscope_analysis as ma
+
+
+def get_ISIs(signal, framerate, num_cells, event_threshold):
+    event_times = []
+    event_ISIs = []
+    for cell in range(num_cells):
+        event_indicies_by_cell = ma.count_events_in_array(signal[cell], 20, .1, threshold=event_threshold, up=True)[1]
+        event_times_by_cell = ([(1/framerate)*x for x in event_indicies_by_cell])
+        event_times.append(event_times_by_cell)
+        cell_ISIs = [(event_times_by_cell[event]-event_times_by_cell[event-1]) for event in range(1, len(event_times_by_cell))]
+        event_ISIs.append(cell_ISIs)
+    return(event_times, event_ISIs)  
 
 
 def binning_function(bin_increment_samples, z_scored_cell, z_score_threshold):
