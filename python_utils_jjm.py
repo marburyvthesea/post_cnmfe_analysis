@@ -18,6 +18,14 @@ import numpy as np
 import miniscope_analysis as ma
 
 
+def align_behavior_data(time_stamps, msCam_range):
+    
+
+
+    return()
+
+
+
 def get_ISIs(signal, framerate, num_cells, event_threshold):
     event_times = []
     event_ISIs = []
