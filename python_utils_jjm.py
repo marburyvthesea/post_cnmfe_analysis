@@ -20,7 +20,17 @@ import miniscope_analysis as ma
 
 def align_behavior_data(time_stamps, msCam_range):
     
+    #lists of ms cam and behavcam time stamps from time_stamps_df 
+    msCam_timestamps = time_stamps[timestamps_df['camNum'] == 0].set_index('frameNum')[CNMFE_frame_range[0]-1:CNMFE_frame_range[1]]
+    behavCam_timestamps = time_stamps[timestamps_df['camNum'] == 1].set_index('frameNum')
 
+    msCam_frames = []
+    for msCam_frame in range(int(msCam_range[0]), int(msCam_range[1]+1))
+        #get sys clock time of each miniscope recorded frame
+        #sys_clock_msCam = time_stamps['sysClock'].loc[msCam_frame]
+        #find behav cam frame closest to sys clock time of ms frame
+        behavCam_frame = list(behav_trimmed.iloc[(behav_trimmed['sysClock']-time_stamps['sysClock'].loc[msCam_frame]).abs().argsort()[:1]].index)[0]
+        
 
     return()
 
