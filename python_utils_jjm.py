@@ -16,23 +16,27 @@ from matplotlib import pyplot as plt
 import scipy.sparse as sparse
 import numpy as np
 import miniscope_analysis as ma
+from tqdm import tqdm
 
 
-def align_behavior_data(time_stamps, msCam_range):
-    
+def align_behavior_data(msCam_timestamps, behavCam_timestamps):
+    """returns msCam Df with aligned timestamps
+    """
     #lists of ms cam and behavcam time stamps from time_stamps_df 
-    msCam_timestamps = time_stamps[timestamps_df['camNum'] == 0].set_index('frameNum')[CNMFE_frame_range[0]-1:CNMFE_frame_range[1]]
-    behavCam_timestamps = time_stamps[timestamps_df['camNum'] == 1].set_index('frameNum')
-
-    msCam_frames = []
-    for msCam_frame in range(int(msCam_range[0]), int(msCam_range[1]+1))
+    behavCam_frames = []
+    sys_clock_behavCam = []
+    for msCam_frame in tqdm(range(0+1, len(msCam_timestamps)+1)):
         #get sys clock time of each miniscope recorded frame
         #sys_clock_msCam = time_stamps['sysClock'].loc[msCam_frame]
         #find behav cam frame closest to sys clock time of ms frame
-        behavCam_frame = list(behav_trimmed.iloc[(behav_trimmed['sysClock']-time_stamps['sysClock'].loc[msCam_frame]).abs().argsort()[:1]].index)[0]
+        behavCam_frame = list(behavCam_timestamps.iloc[(behavCam_timestamps['sysClock']-msCam_timestamps['sysClock'].loc[msCam_frame]).abs().argsort()[:1]].index)[0]
+        behavCam_frames.append(behavCam_frame)
+        sys_clock_behavCam.append(behavCam_timestamps.loc[behavCam_frame]['sysClock'])
         
+    msCam_timestamps['behavCam_frames'] = behavCam_frames
+    msCam_timestamps['sys_clock_behavCam'] = sys_clock_behavCam
 
-    return()
+    return(msCam_timestamps)
 
 
 
@@ -47,6 +51,20 @@ def get_ISIs(signal, framerate, num_cells, event_threshold):
         event_ISIs.append(cell_ISIs)
     return(event_times, event_ISIs)  
 
+def binning_function_uncrop(bin_increment_samples, z_scored_cell, z_score_threshold):
+    bin_start = 0
+    bin_end = bin_increment_samples
+    binned = np.zeros(len(z_scored_cell))
+    #time_index = []
+    while bin_end < len(z_scored_cell):
+        if np.any(z_scored_cell[bin_start:bin_end]>z_score_threshold):
+            binned[bin_start:bin_end] = np.ones(bin_increment_samples)
+        else:
+            binned[bin_start:bin_end] = np.zeros(bin_increment_samples)
+        #time_index.append(bin_start)
+        bin_start += bin_increment_samples
+        bin_end += bin_increment_samples
+    return(np.array(binned))
 
 def binning_function(bin_increment_samples, z_scored_cell, z_score_threshold):
     bin_start = 0
