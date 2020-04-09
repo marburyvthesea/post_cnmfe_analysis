@@ -11,12 +11,21 @@ Created on Nov 1 2017
 """
 
 from past.utils import old_div
-
 from matplotlib import pyplot as plt
+from scipy import stats
 import scipy.sparse as sparse
 import numpy as np
 import miniscope_analysis as ma
 from tqdm import tqdm
+
+
+def z_score_CNMFE(CNMFE_results):
+    C_Z_scored = []
+    for cell in range(len(CNMFE_results)):
+      Z_scored_cell = stats.zscore(CNMFE_results[cell])
+      C_Z_scored.append(Z_scored_cell)
+    C_Z_scored = np.array(C_Z_scored)
+    return(C_Z_scored)
 
 
 def align_behavior_data(msCam_timestamps, behavCam_timestamps):
