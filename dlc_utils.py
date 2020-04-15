@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 from tqdm import tqdm
+import statsmodels.formula.api as smf
 
 def calculate_centroid(dlc_output_df):
 	#df column names
@@ -10,14 +11,19 @@ def calculate_centroid(dlc_output_df):
 	#calculate centroid coordiantes 
 	x_centroids = np.zeros(1000)
 	y_centroids = np.zeros(1000)
+	likelihoods = np.zeros(1000)
 	for frame in range(len(dlc_output_df)):
 		x_coordinates = [dlc_output_df[df_columns[0][0]][body_part]['x'].loc[frame] for body_part in list(set([df_columns[item][1] for item in range(len(df_columns))]))]
 		x_centroid = sum(x_coordinates)/len(x_coordinates)
 		y_coordinates = [dlc_output_df[df_columns[0][0]][body_part]['y'].loc[frame] for body_part in list(set([df_columns[item][1] for item in range(len(df_columns))]))]
 		y_centroid = sum(y_coordinates)/len(y_coordinates)
 		x_centroids[frame] = x_centroid 
-		y_centroids[frame] = y_centroid 
-	output_df_with_centroid = pd.concat([dlc_output_df, pd.DataFrame({(df_columns[0][0], 'centroid', 'x') : x_centroids, (df_columns[0][0], 'centroid', 'y') : y_centroids})], axis=1)
+		y_centroids[frame] = y_centroid
+		# add in an average of likelihoods for the centroid calculation here (weighted average?)
+		likelihood = np.mean([dlc_output_df[df_columns[0][0]][body_part]['likelihood'].loc[frame] for body_part in list(set([df_columns[item][1] for item in range(len(df_columns))]))])
+		likelihoods[frame] = likelihood 
+	output_df_with_centroid = pd.concat([dlc_output_df, pd.DataFrame({(df_columns[0][0], 'centroid', 'x') : x_centroids, (df_columns[0][0], 'centroid', 'y') : y_centroids, 
+		(df_columns[0][0], 'centroid', 'likelihood') : likelihoods})], axis=1)
 	return(output_df_with_centroid)
 
 
@@ -104,6 +110,79 @@ def extended_bin_by_activity_threshold(rdf_column, resting_time_threshold, activ
 		else:
 			point = point+1 
 	return(moving_bins_extended)
+
+## binning fluorescence by velocity
+
+def bin_C_by_V_bins(V_df, body_part, C_df, bin_numbers):
+	# bin velocity of body part
+	binned = pd.cut(V_df[body_part].values, bin_numbers)
+	# integer values correspond to bins
+	v_data_binned = binned.codes
+	# actual values of velocity bin ends
+	bin_intervals=binned.categories.values
+	# group the fluorescence at each data point into the velocity bins
+	num_cells = len(C_df.columns)
+	cells_c_binned_by_v = {}
+	for cell in range(1, num_cells):
+		C_by_cell_grouped = []
+		for point in range(len(C_df[cell].values)):
+			C_by_cell_grouped.append((v_data_binned[point], C_df[cell].values[point]))
+		# first item in tuple will be bin identity, next is fluorescence value
+		cells_c_binned_by_v[cell] = (np.array([item[0] for item in C_by_cell_grouped]), np.array([item[1] for item in C_by_cell_grouped]))
+	# create averages of binned data
+	means_by_cell = {}
+	for cell in range(1, num_cells):
+		means_by_bin = []
+		for bin_ in range(0, bin_numbers):
+			means_by_bin.append((bin_, np.mean(np.array([cells_c_binned_by_v[cell][1][point] for point in np.where(cells_c_binned_by_v[cell][0]==bin_)]))))
+		means_by_cell[cell] = means_by_bin
+	return(cells_c_binned_by_v, means_by_cell, bin_intervals)
+
+## downsampling and binning recordings session
+
+def downsample_session_and_bin_C_by_V(downsampled_interval_seconds, number_of_bins, body_part, velocity_df, fluorescence_df):
+	"""velocity and fluorescence dfs should have timedelta index"""
+	new_sampling_interval = downsampled_interval_seconds
+	interpolated = velocity_df.set_index(pd.to_timedelta(np.linspace(0, len(velocity_df)*(1/20), len(velocity_df)), 
+		unit='s'), drop=True)
+	interpolated_downsampled = interpolated.resample(str(new_sampling_interval)+'S').max()
+	# downsample C trace to match 
+	C_z_scored_downsampled = fluorescence_df.resample(str(new_sampling_interval)+'S').max()
+	# binning C by V
+	C_binned_by_V, means_by_cell, bin_intervals = bin_C_by_V_bins(interpolated_downsampled, body_part, C_z_scored_downsampled, 
+		number_of_bins)
+	# C binned by V df
+	C_by_v_df = pd.concat([pd.DataFrame(value, index=['bin_id', 'C_df']) for key, value in C_binned_by_V.items()], axis=0, keys=C_binned_by_V.keys(), names=['cells']).transpose()
+	# C binned by V means df 
+	C_by_v_means_df = pd.concat([pd.DataFrame(value, index=bin_intervals, columns=['bin', 'C_df_mean']) for key, value in means_by_cell.items()], axis=1, keys=means_by_cell.keys(), names=['cells'])
+
+	return(C_by_v_df, C_by_v_means_df)
+
+def create_regression_models_per_cell(cells_mean_C_binned_by_V, polynomial_degree):
+	cell_results = {}
+	for cell in range(1, len(cells_mean_C_binned_by_V)+1):
+		#degree of polynomial model
+		deg = polynomial_degree
+		num_bins = len(cells_mean_C_binned_by_V)
+		x_to_fit = cells_mean_C_binned_by_V[cell]['bin'].values
+		y_to_fit = cells_mean_C_binned_by_V[cell]['C_df_mean'].values
+		#df for stats models
+		fit_data = pd.DataFrame(columns=['y', 'x'])
+		fit_data['y'] = y_to_fit
+		fit_data['x'] = x_to_fit
+		fit_data.dropna(inplace=True)
+
+		# poly1d object for ease of plotting
+		p1d = np.poly1d(np.polyfit(fit_data['x'].values, fit_data['y'].values, deg))
+
+		model = np.poly1d(np.polyfit(fit_data['x'].values, fit_data['y'].values, deg))
+		results = smf.ols(formula='y ~ model(x)', data=fit_data).fit()
+		cell_results[cell] = {'p1d' : p1d, 'model' : model, 'statsmodel_results' : results}
+
+	return(cell_results)
+
+
+
 
 
 

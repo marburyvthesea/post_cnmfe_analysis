@@ -17,6 +17,8 @@ import scipy.sparse as sparse
 import numpy as np
 import miniscope_analysis as ma
 from tqdm import tqdm
+import scipy.io as sio
+import pandas as pd
 
 
 def z_score_CNMFE(CNMFE_results):
@@ -298,3 +300,35 @@ def plot_contours(A, Cn, list_to_plot=None, thr=None, thr_method='max', maxthr=0
                 ax.text(cm[i, 1], cm[i, 0], str(i + 1), color=colors)
 
     return coordinates
+
+
+def prepare_timedelta_dfs(path_to_cnmfe_data, path_to_interpolated_tracking_data):
+    # load cnmfe_data
+    CNMFE_results = sio.loadmat(path_to_cnmfe_data)
+    # behavior results
+    interpolated = pd.read_csv(path_to_interpolated_tracking_data)
+    interpolated.set_index('Unnamed: 0', inplace=True)
+    interpolated.index.rename('time(sec)', inplace=True)
+    interpolated['msCam_index'] = np.linspace(0, len(interpolated)-1, len(interpolated))
+    interpolated.drop('msCamFrame', axis=1, inplace=True)
+    interpolated.drop('level_0', axis=1, inplace=True)
+    #create z scored data frame, with timedelta index matching behavior 
+    C_z_scored = pd.DataFrame(np.transpose(z_score_CNMFE(CNMFE_results['C'])), 
+      columns=[int(cell_num) for cell_num in np.linspace(1, len(CNMFE_results['C']), len(CNMFE_results['C']))])
+    C_z_scored['msCamFrame'] = C_z_scored.index.values
+    C_z_scored = C_z_scored.set_index(pd.to_timedelta(np.linspace(0, len(C_z_scored)*(1/20), len(C_z_scored)), unit='s'), drop=False)
+
+    return(C_z_scored, interpolated)
+
+
+
+
+
+
+
+
+
+
+
+
+
