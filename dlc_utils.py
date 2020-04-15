@@ -160,7 +160,7 @@ def downsample_session_and_bin_C_by_V(downsampled_interval_seconds, number_of_bi
 
 def create_regression_models_per_cell(cells_mean_C_binned_by_V, polynomial_degree):
 	cell_results = {}
-	for cell in range(1, len(cells_mean_C_binned_by_V)+1):
+	for cell in range(1, len(list(set([item[0] for item in cells_mean_C_binned_by_V.columns])))+1):
 		#degree of polynomial model
 		deg = polynomial_degree
 		num_bins = len(cells_mean_C_binned_by_V)
@@ -177,10 +177,17 @@ def create_regression_models_per_cell(cells_mean_C_binned_by_V, polynomial_degre
 
 		model = np.poly1d(np.polyfit(fit_data['x'].values, fit_data['y'].values, deg))
 		results = smf.ols(formula='y ~ model(x)', data=fit_data).fit()
-		cell_results[cell] = {'p1d' : p1d, 'model' : model, 'statsmodel_results' : results}
+		cell_results[cell] = {'p1d' : p1d, 'model' : model, 'statsmodel_results' : results, 'fit_df' : fit_data}
 
 	return(cell_results)
 
+def plot_cell_regression(regression_results, cell, cells_mean_C_binned_by_V):
+
+	num_bins = len(cells_mean_C_binned_by_V)
+	p1d = regression_results[cell]['p1d']
+	xp = np.linspace(0, num_bins, num_bins)
+
+	return(xp, p1d)
 
 
 
