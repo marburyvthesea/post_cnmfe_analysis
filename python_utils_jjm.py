@@ -302,6 +302,17 @@ def plot_contours(A, Cn, list_to_plot=None, thr=None, thr_method='max', maxthr=0
     return coordinates
 
 
+# match behavior tracking file with cnmfe file
+
+def find_behavior_tracking(cnmfe_file, cnmfe_file_dict):
+  animal = cnmfe_file_dict[cnmfe_file][0]
+  session = cnmfe_file_dict[cnmfe_file][1]
+  path_to_tracking = animal +'_' + session + '/' + animal + '_' + session + '_dlc_tracking_foranalysis_04142020.csv'
+  
+  return(path_to_tracking)
+
+# group binning analysis
+
 def prepare_timedelta_dfs(path_to_cnmfe_data, path_to_interpolated_tracking_data):
     # load cnmfe_data
     CNMFE_results = sio.loadmat(path_to_cnmfe_data)
