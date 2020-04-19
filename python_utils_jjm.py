@@ -73,7 +73,7 @@ def get_ISIs_binned_data(signal, framerate, num_cells, event_threshold):
         event_ISIs.append(cell_ISIs)
     return(event_times, event_ISIs)  
 
-def binning_function_uncrop(bin_increment_samples, z_scored_cell, z_score_threshold):
+def binning_function_uncrop(z_scored_cell, bin_increment_samples, z_score_threshold):
     bin_start = 0
     bin_end = bin_increment_samples
     binned = np.zeros(len(z_scored_cell))
