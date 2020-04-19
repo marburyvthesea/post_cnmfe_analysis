@@ -309,7 +309,7 @@ def return_spatial_info(path_to_cnmfe, spatial_threshold, dims=(752, 480)):
   d1 = dims[0]
   d2 = dims[1]
   coms = com(spatial_components, d1, d2)
-  com_df = pd.DataFrame(coms, columns=['y', 'x'], index=[int(index) for index in np.linspace(1, len(com), len(com))])
+  com_df = pd.DataFrame(coms, columns=['y', 'x'], index=[int(index) for index in np.linspace(1, len(coms), len(coms))])
   return(com_df)
 
 
