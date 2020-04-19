@@ -301,6 +301,18 @@ def plot_contours(A, Cn, list_to_plot=None, thr=None, thr_method='max', maxthr=0
 
     return coordinates
 
+## for compiling spatial information about cells
+
+def return_spatial_info(path_to_cnmfe, spatial_threshold, dims=(752, 480)):
+  CNMFE_results = sio.loadmat(path_to_cnmfe)
+  spatial_components=np.array(CNMFE_results['A'].todense())
+  d1 = dims[0]
+  d2 = dims[1]
+  coms = com(spatial_components, d1, d2)
+  com_df = pd.DataFrame(coms, columns=['y', 'x'], index=[int(index) for index in np.linspace(1, len(com), len(com))])
+  return(com_df)
+
+
 
 # match behavior tracking file with cnmfe file
 
@@ -330,6 +342,9 @@ def prepare_timedelta_dfs(path_to_cnmfe_data, path_to_interpolated_tracking_data
     C_z_scored = C_z_scored.set_index(pd.to_timedelta(np.linspace(0, len(C_z_scored)*(1/20), len(C_z_scored)), unit='s'), drop=False)
 
     return(C_z_scored, interpolated)
+
+
+
 
 
 
