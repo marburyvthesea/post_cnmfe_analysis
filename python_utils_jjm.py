@@ -310,9 +310,22 @@ def return_spatial_info(path_to_cnmfe, spatial_threshold, dims=(752, 480)):
   d2 = dims[1]
   coms = com(spatial_components, d1, d2)
   com_df = pd.DataFrame(coms, columns=['y', 'x'], index=[int(index) for index in np.linspace(1, len(coms), len(coms))])
-  return(com_df)
+  return(com_df, spatial_components)
 
-
+def create_contour_layouts(spatial_components, dims=(752, 480)):
+  # return dict with info for plotting
+  x, y = np.mgrid[0:d1:1, 0:d2:1]
+  cell_contours = {}
+  to_plot = (0, len(spatial_components))
+  for i in range(to_plot[0], to_plot[1]):
+    Bvec = spatial_components[:, i].flatten()
+    #normalize contours to 1
+    Bvec /= np.max(Bvec)
+    thr = 0.6
+  # rehape to dimensions of image
+    Bmat = np.reshape(Bvec, (dims), order='F')
+    cell_contours[i+1] = Bmat
+  return(cell_contours, x, y)
 
 # match behavior tracking file with cnmfe file
 
