@@ -316,7 +316,7 @@ def create_contour_layouts(spatial_components, dims=(752, 480)):
   # return dict with info for plotting
   x, y = np.mgrid[0:dims[0]:1, 0:dims[1]:1]
   cell_contours = {}
-  to_plot = (0, len(spatial_components))
+  to_plot = (0, np.shape(spatial_components)[1])
   for i in range(to_plot[0], to_plot[1]):
     Bvec = spatial_components[:, i].flatten()
     #normalize contours to 1
