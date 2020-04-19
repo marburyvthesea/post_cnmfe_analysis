@@ -314,7 +314,7 @@ def return_spatial_info(path_to_cnmfe, spatial_threshold, dims=(752, 480)):
 
 def create_contour_layouts(spatial_components, dims=(752, 480)):
   # return dict with info for plotting
-  x, y = np.mgrid[0:d1:1, 0:d2:1]
+  x, y = np.mgrid[0:dims[0]:1, 0:dims[1]:1]
   cell_contours = {}
   to_plot = (0, len(spatial_components))
   for i in range(to_plot[0], to_plot[1]):
