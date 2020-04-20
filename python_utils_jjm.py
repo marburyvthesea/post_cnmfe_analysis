@@ -392,7 +392,7 @@ def select_trigger_regions(binned_velocity, activity_threshold, resting_baseline
 
   transition_indicies = []
   for point in range(resting_period_baseline, len(binned_velocity)-resting_period_baseline):
-    if binned_velocity[point]>activity_threshold and not any(binned_velocity[int(point-resting_period_baseline):point]>resting_baseline_threshold)
+    if binned_velocity[point]>activity_threshold and not any(binned_velocity[int(point-resting_period_baseline):point]>resting_baseline_threshold):
   return(np.array(transition_indicies))
 
 #select and average section
