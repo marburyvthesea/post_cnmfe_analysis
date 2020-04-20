@@ -389,7 +389,7 @@ def prepare_timedelta_dfs(path_to_cnmfe_data, path_to_interpolated_tracking_data
 
 ## triggered averaging for session
 
-def triggered_average(velocity_downsampling_interval, velocity_df, body_part, velocity_bin_width, resting_time_threshold, 
+def triggered_average(velocity_downsampling_interval, velocity_df, C_z_scored, body_part, velocity_bin_width, resting_time_threshold, 
   active_time_threshold, resting_threshold, activity_threshold, resting_period_baseline):
   #downsample velocity
   interpolated = velocity_df.set_index(pd.to_timedelta(np.linspace(0, len(velocity_df)*(1/20), len(velocity_df)), unit='s'), drop=True)
