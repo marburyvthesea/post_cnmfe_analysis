@@ -337,8 +337,8 @@ def store_regression_info_per_session(pairwise_pearson, pairwise_distance, degre
   fit_data = pd.DataFrame(columns=['y', 'x'])
   fit_data['y'] = pairwise_pearson
   fit_data['x'] = pairwise_distance
-  p1d = np.poly1d(np.polyfit(fit_data['x'].values, fit_data['y'].values, deg))
-  model = np.poly1d(np.polyfit(fit_data['x'].values, fit_data['y'].values, deg))
+  p1d = np.poly1d(np.polyfit(fit_data['x'].values, fit_data['y'].values, degree))
+  model = np.poly1d(np.polyfit(fit_data['x'].values, fit_data['y'].values, degree))
   results = smf.ols(formula='y ~ model(x)', data=fit_data).fit()
   return({'p1d' : p1d, 'model' : model, 'statsmodel_results' : results, 'fit_df' : fit_data})
 
