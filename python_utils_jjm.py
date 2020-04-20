@@ -333,7 +333,7 @@ def get_linear_pairwise_correlation_coefficients(C_data, com_df):
   pairwise_pearson = pd.DataFrame(pairwise_r_correlation, index=['pairwise_pearson_r'])
   return(pairwise_pearson)
 
-def store_regression_info_per_session(pairwise_pearson, parwise_distance, degree):
+def store_regression_info_per_session(pairwise_pearson, pairwise_distance, degree):
   fit_data = pd.DataFrame(columns=['y', 'x'])
   fit_data['y'] = pairwise_pearson
   fit_data['x'] = pairwise_distance
