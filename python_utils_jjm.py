@@ -401,8 +401,8 @@ def average_triggered_regions(C_z_scored, transition_indicies, length_samples_to
   transition_activity = {}
   for index in transition_indicies:
     C_z_scored_for_averaging = C_z_scored.drop(['msCamFrame'], axis=1)
-    transition_activity[index] = C_z_scored_for_averaging.mean(axis=1)[index-length_samples_to_plot:index+length_samples_to_plot].values  
-  return(pd.DataFrame(transition_activity))
+    transition_activity[index] = C_z_scored_for_averaging.mean(axis=1)[index-length_samples_to_plot:index+length_samples_to_plot].values
+  return(transition_activity)
 
 #adjust baseline
 def adjust_triggered_average_plots(binned_velocity, C_z_scored, threshold_activity_df):
