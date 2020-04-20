@@ -19,6 +19,8 @@ import miniscope_analysis as ma
 from tqdm import tqdm
 import scipy.io as sio
 import pandas as pd
+import scipy.spatial.distance as dist
+import itertools
 
 
 def z_score_CNMFE(CNMFE_results):
