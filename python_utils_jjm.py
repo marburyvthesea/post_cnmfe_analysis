@@ -313,6 +313,31 @@ def return_spatial_info(path_to_cnmfe, spatial_threshold, dims=(752, 480)):
   com_df = pd.DataFrame(coms, columns=['y', 'x'], index=[int(index) for index in np.linspace(1, len(coms), len(coms))])
   return(com_df, spatial_components)
 
+#analysis by group
+
+def get_pairwise_distance_by_session(com_df):
+  pairwise_euclidean_distance = {}
+  for pair in itertools.combinations(range(1, len(com_df)+1), 2):
+    pairwise_euclidean_distance[pair] = dist.euclidean(com_df.loc[pair[0]], com_df.loc[pair[1]])
+  pairwise_distance = pd.DataFrame(pairwise_euclidean_distance, index=['euclidean distance'])
+  return(pairwise_distance)
+
+def get_linear_pairwise_correlation_coefficients(C_data, com_df):
+  pairwise_r_correlation = {}
+  for pair in itertools.combinations(range(1, len(com_df)+1), 2):
+    pairwise_r_correlation[pair] = stats.pearsonr(C_data[pair[0]], C_data[pair[1]])[0]
+  pairwise_pearson = pd.DataFrame(pairwise_r_correlation, index=['pairwise_pearson_r'])
+  return(pairwise_pearson)
+
+def store_regression_info_per_session(pairwise_pearson, parwise_distance, degree):
+  fit_data = pd.DataFrame(columns=['y', 'x'])
+  fit_data['y'] = pairwise_pearson
+  fit_data['x'] = pairwise_pearson
+  p1d = np.poly1d(np.polyfit(fit_data['x'].values, fit_data['y'].values, deg))
+  model = np.poly1d(np.polyfit(fit_data['x'].values, fit_data['y'].values, deg))
+  results = smf.ols(formula='y ~ model(x)', data=fit_data).fit()
+  return({'p1d' : p1d, 'model' : model, 'statsmodel_results' : results, 'fit_df' : fit_data})
+
 def create_contour_layouts(spatial_components, dims=(752, 480)):
   # return dict with info for plotting
   x, y = np.mgrid[0:dims[0]:1, 0:dims[1]:1]

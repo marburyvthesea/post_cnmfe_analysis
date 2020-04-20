@@ -174,7 +174,6 @@ def create_regression_models_per_cell(cells_mean_C_binned_by_V, polynomial_degre
 
 		# poly1d object for ease of plotting
 		p1d = np.poly1d(np.polyfit(fit_data['x'].values, fit_data['y'].values, deg))
-
 		model = np.poly1d(np.polyfit(fit_data['x'].values, fit_data['y'].values, deg))
 		results = smf.ols(formula='y ~ model(x)', data=fit_data).fit()
 		cell_results[cell] = {'p1d' : p1d, 'model' : model, 'statsmodel_results' : results, 'fit_df' : fit_data}
