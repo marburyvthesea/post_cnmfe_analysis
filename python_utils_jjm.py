@@ -402,7 +402,9 @@ def average_triggered_regions(C_z_scored, transition_indicies, length_samples_to
   for index in transition_indicies:
     if index < len(C_z_scored):
       C_z_scored_for_averaging = C_z_scored.drop(['msCamFrame'], axis=1)
-      transition_activity[index] = C_z_scored_for_averaging.mean(axis=1)[index-length_samples_to_plot:index+length_samples_to_plot].values
+      region = C_z_scored_for_averaging.mean(axis=1)[index-length_samples_to_plot:index+length_samples_to_plot].values
+      if len(region) == length_samples_to_plot*2:
+        transition_activity[index] = region
   return(pd.DataFrame(transition_activity))
 
 #adjust baseline
