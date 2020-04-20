@@ -22,6 +22,8 @@ import pandas as pd
 import scipy.spatial.distance as dist
 import itertools
 
+import dlc_utils
+
 
 def z_score_CNMFE(CNMFE_results):
     C_Z_scored = []
@@ -364,7 +366,7 @@ def find_behavior_tracking(cnmfe_file, cnmfe_file_dict):
   
   return(path_to_tracking)
 
-# group binning analysis
+## group binning analysis
 
 def prepare_timedelta_dfs(path_to_cnmfe_data, path_to_interpolated_tracking_data):
     # load cnmfe_data
@@ -385,9 +387,34 @@ def prepare_timedelta_dfs(path_to_cnmfe_data, path_to_interpolated_tracking_data
     return(C_z_scored, interpolated)
 
 
+## triggered averaging for session
 
-
-
+def triggered_average(velocity_downsampling_interval, velocity_df, body_part, velocity_bin_width, resting_time_threshold, 
+  active_time_threshold, resting_threshold, activity_threshold, resting_period_baseline):
+  #downsample velocity
+  interpolated = velocity_df.set_index(pd.to_timedelta(np.linspace(0, len(velocity_df)*(1/20), len(velocity_df)), unit='s'), drop=True)
+  interpolated_downsampled = interpolated.resample(str(velocity_downsampling_interval)+'S').max()
+  #bin
+  binned_velocity = dlc_utils.bin_by_activity_threshold(interpolated[body_part], resting_time_threshold, active_time_threshold, resting_threshold, activity_threshold)
+  #pick events
+  #return inidicies where velocity transitions from at least a 2 second resting period 
+  transition_indicies = []
+  for point in range(resting_period_baseline, len(binned_velocity)-resting_period_baseline):
+    if binned_velocity[point]>activity_threshold and not any(binned_velocity[int(point-resting_period_baseline):point]):
+      transition_indicies.append(point)
+  transition_indicies = np.array(transition_indicies)
+  #average fluorescence trace
+  transition_activity = {}
+  for index in transition_indicies:
+    C_z_scored_for_averaging = C_z_scored.drop(['msCamFrame'], axis=1)  
+    transition_activity[index] = C_z_scored_for_averaging.mean(axis=1)[index-resting_period_baseline:index+resting_period_baseline].values
+  threshold_activity_df = pd.DataFrame(transition_activity)
+  #
+  #return indicies where velocity value is below threshold, resting 
+  resting_indicies = [index[0] for index in np.argwhere(binned_velocity[0:len(C_z_scored_for_averaging)]<0.5)]
+  resting_value = abs(C_z_scored_for_averaging.iloc[resting_indicies].mean(axis=1).mean())
+  #normalize to resting z score value
+  rezeroed_activity_df = ((threshold_activity_df+resting_value)-resting_value)/(resting_value)
 
 
 
