@@ -404,7 +404,11 @@ def average_triggered_regions(C_z_scored, transition_indicies, length_samples_to
   return(pd.DataFrame(transition_activity))
 
 #adjust baseline
-
+def adjust_triggered_average_plots(binned_velocity, C_z_scored):
+  resting_indicies = [index[0] for index in np.argwhere(binned_velocity[0:len(C_z_scored_for_averaging)]<0.5)]
+  resting_value = abs(C_z_scored_for_averaging.iloc[resting_indicies].mean(axis=1).mean())
+  rezeroed_activity_df = ((threshold_activity_df+resting_value)-resting_value)/(resting_value)
+  return(rezeroed_activity_df)
 
 
 def triggered_average(velocity_downsampling_interval, velocity_df, C_z_scored, body_part, velocity_bin_width, resting_time_threshold, 
