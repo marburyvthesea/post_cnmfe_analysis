@@ -389,6 +389,7 @@ def prepare_timedelta_dfs(path_to_cnmfe_data, path_to_interpolated_tracking_data
 
 ## triggered averaging for session
 def select_trigger_regions(binned_velocity, activity_threshold, resting_threshold, resting_baseline ):
+  transition_indicies = []
   for point in range(resting_baseline, len(binned_velocity)-resting_baseline):
     if binned_velocity[point]>activity_threshold and not any(binned_velocity[int(point-resting_baseline):point]>resting_threshold):
            transition_indicies.append(point)
