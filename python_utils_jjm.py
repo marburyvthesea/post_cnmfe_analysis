@@ -21,6 +21,7 @@ import scipy.io as sio
 import pandas as pd
 import scipy.spatial.distance as dist
 import itertools
+import statsmodels.formula.api as smf
 
 import dlc_utils
 
