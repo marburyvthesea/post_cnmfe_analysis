@@ -397,7 +397,7 @@ def select_trigger_regions(binned_velocity, activity_threshold, resting_baseline
   return(np.array(transition_indicies))
 
 #select and average section
-def average_triggered_regions(C_z_scored, transition_indicies, length_samples_to_plot)
+def average_triggered_regions(C_z_scored, transition_indicies, length_samples_to_plot):
   transition_activity = {}
   for index in transition_indicies:
     C_z_scored_for_averaging = C_z_scored.drop(['msCamFrame'], axis=1)
