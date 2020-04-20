@@ -388,6 +388,24 @@ def prepare_timedelta_dfs(path_to_cnmfe_data, path_to_interpolated_tracking_data
 
 
 ## triggered averaging for session
+def select_trigger_regions(binned_velocity, activity_threshold, resting_baseline_threshold, resting_period_baseline):
+
+  transition_indicies = []
+  for point in range(resting_period_baseline, len(binned_velocity)-resting_period_baseline):
+    if binned_velocity[point]>activity_threshold and not any(binned_velocity[int(point-resting_period_baseline):point]>resting_baseline_threshold)
+  return(np.array(transition_indicies))
+
+#select and average section
+def average_triggered_regions(C_z_scored, transition_indicies, length_samples_to_plot)
+  transition_activity = {}
+  for index in transition_indicies:
+    C_z_scored_for_averaging = C_z_scored.drop(['msCamFrame'], axis=1)
+    transition_activity[index] = C_z_scored_for_averaging.mean(axis=1)[index-length_samples_to_plot:index+length_samples_to_plot].values  
+  return(pd.DataFrame(transition_activity))
+
+#adjust baseline
+
+
 
 def triggered_average(velocity_downsampling_interval, velocity_df, C_z_scored, body_part, velocity_bin_width, resting_time_threshold, 
   active_time_threshold, resting_threshold, activity_threshold, resting_period_baseline):
