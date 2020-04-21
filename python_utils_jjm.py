@@ -420,8 +420,8 @@ def adjust_triggered_average_plots(binned_velocity, C_z_scored, threshold_activi
 
 #filter by spatial components 
 
-def filter_out_by_size(C_z_scored, cell_contours, contour_thresold, cell_size_filter_threshold):
-  cells_to_drop = np.array([cell for cell in range(1, len(cell_contours)+1) if len(np.array(np.where(for_dims[cell]>contour_thresold)[0]))<cell_size_filter_threshold])
+def filter_out_by_size(C_z_scored, cell_contours, cell_dims, contour_thresold, cell_size_filter_threshold):
+  cells_to_drop = np.array([cell for cell in range(1, len(cell_contours)+1) if len(np.array(np.where(cell_dims[cell]>contour_thresold)[0]))<cell_size_filter_threshold])
   C_z_scored.drop(cells_to_drop, axis=1, inplace=True)
   return(C_z_scored)
 
