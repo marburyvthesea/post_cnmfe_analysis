@@ -54,8 +54,6 @@ def align_behavior_data(msCam_timestamps, behavCam_timestamps):
 
     return(msCam_timestamps)
 
-
-
 def get_ISIs(signal, framerate, num_cells, event_threshold):
     event_times = []
     event_ISIs = []
@@ -322,14 +320,14 @@ def return_spatial_info(path_to_cnmfe, spatial_threshold, dims=(752, 480)):
 
 def get_pairwise_distance_by_session(com_df):
   pairwise_euclidean_distance = {}
-  for pair in itertools.combinations(range(1, len(com_df)+1), 2):
+  for pair in itertools.combinations(list(com_df.index), 2):
     pairwise_euclidean_distance[pair] = dist.euclidean(com_df.loc[pair[0]], com_df.loc[pair[1]])
   pairwise_distance = pd.DataFrame(pairwise_euclidean_distance, index=['euclidean distance'])
   return(pairwise_distance)
 
 def get_linear_pairwise_correlation_coefficients(C_data, com_df):
   pairwise_r_correlation = {}
-  for pair in itertools.combinations(range(1, len(com_df)+1), 2):
+  for pair in itertools.combinations(list(com_df.index), 2):
     pairwise_r_correlation[pair] = stats.pearsonr(C_data[pair[0]], C_data[pair[1]])[0]
   pairwise_pearson = pd.DataFrame(pairwise_r_correlation, index=['pairwise_pearson_r'])
   return(pairwise_pearson)
@@ -371,7 +369,7 @@ def find_behavior_tracking(cnmfe_file, cnmfe_file_dict):
 
 ## group binning analysis
 
-def prepare_timedelta_dfs(path_to_cnmfe_data, path_to_interpolated_tracking_data):
+def prepare_timedelta_dfs(path_to_cnmfe_data, path_to_interpolated_tracking_data, normalized=False):
     # load cnmfe_data
     CNMFE_results = sio.loadmat(path_to_cnmfe_data)
     # behavior results
@@ -382,16 +380,20 @@ def prepare_timedelta_dfs(path_to_cnmfe_data, path_to_interpolated_tracking_data
     interpolated.drop('msCamFrame', axis=1, inplace=True)
     interpolated.drop('level_0', axis=1, inplace=True)
     #create z scored data frame, with timedelta index matching behavior 
-    C_z_scored = pd.DataFrame(np.transpose(z_score_CNMFE(CNMFE_results['C'])), 
-      columns=[int(cell_num) for cell_num in np.linspace(1, len(CNMFE_results['C']), len(CNMFE_results['C']))])
-    C_z_scored['msCamFrame'] = C_z_scored.index.values
-    C_z_scored = C_z_scored.set_index(pd.to_timedelta(np.linspace(0, len(C_z_scored)*(1/20), len(C_z_scored)), unit='s'), drop=False)
+    if normalized:
+      normalized_df = pd.DataFrame(np.transpose(normalize(CNMFE_results['C'])), 
+        columns=[int(cell_num) for cell_num in np.linspace(1, len(CNMFE_results['C']), len(CNMFE_results['C']))])
+      C_z_scored = normalized_df
+    else:
+      C_z_scored = pd.DataFrame(np.transpose(z_score_CNMFE(CNMFE_results['C'])), 
+        columns=[int(cell_num) for cell_num in np.linspace(1, len(CNMFE_results['C']), len(CNMFE_results['C']))])
+      C_z_scored['msCamFrame'] = C_z_scored.index.values
+      C_z_scored = C_z_scored.set_index(pd.to_timedelta(np.linspace(0, len(C_z_scored)*(1/20), len(C_z_scored)), unit='s'), drop=False)
 
     return(C_z_scored, interpolated)
 
-
 ## triggered averaging for session
-def select_trigger_regions(binned_velocity, activity_threshold, resting_threshold, resting_baseline ):
+def select_trigger_regions(binned_velocity, activity_threshold, resting_threshold, resting_baseline):
   transition_indicies = []
   for point in range(resting_baseline, len(binned_velocity)-resting_baseline):
     if binned_velocity[point]>activity_threshold and not any(binned_velocity[int(point-resting_baseline):point]>resting_threshold):
