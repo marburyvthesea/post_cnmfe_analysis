@@ -347,6 +347,7 @@ def create_contour_layouts(spatial_components, dims=(752, 480)):
   # return dict with info for plotting
   x, y = np.mgrid[0:dims[0]:1, 0:dims[1]:1]
   cell_contours = {}
+  for_dims = {}
   to_plot = (0, np.shape(spatial_components)[1])
   for i in range(to_plot[0], to_plot[1]):
     Bvec = spatial_components[:, i].flatten()
@@ -356,7 +357,8 @@ def create_contour_layouts(spatial_components, dims=(752, 480)):
   # rehape to dimensions of image
     Bmat = np.reshape(Bvec, (dims), order='F')
     cell_contours[i+1] = Bmat
-  return(cell_contours, x, y)
+    for_dims[i+1] = Bvec
+  return(cell_contours, x, y, for_dims)
 
 # match behavior tracking file with cnmfe file
 
