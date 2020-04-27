@@ -22,7 +22,7 @@ import pandas as pd
 import scipy.spatial.distance as dist
 import itertools
 import statsmodels.formula.api as smf
-
+import math
 import dlc_utils
 
 
@@ -356,7 +356,7 @@ def create_contour_layouts(spatial_components, dims=(752, 480)):
     Bmat = np.reshape(Bvec, (dims), order='F')
     cell_contours[i+1] = Bmat
     for_dims[i+1] = Bvec
-  return(cell_contours, x, y, for_dims)
+  return(cell_contours, for_dims)
 
 # match behavior tracking file with cnmfe file
 
@@ -369,9 +369,8 @@ def find_behavior_tracking(cnmfe_file, cnmfe_file_dict):
 
 ## group binning analysis
 
-def prepare_timedelta_dfs(path_to_cnmfe_data, path_to_interpolated_tracking_data, normalized=False):
+def prepare_timedelta_dfs(path_to_interpolated_tracking_data):
     # load cnmfe_data
-    CNMFE_results = sio.loadmat(path_to_cnmfe_data)
     # behavior results
     interpolated = pd.read_csv(path_to_interpolated_tracking_data)
     interpolated.set_index('Unnamed: 0', inplace=True)
@@ -379,18 +378,16 @@ def prepare_timedelta_dfs(path_to_cnmfe_data, path_to_interpolated_tracking_data
     interpolated['msCam_index'] = np.linspace(0, len(interpolated)-1, len(interpolated))
     interpolated.drop('msCamFrame', axis=1, inplace=True)
     interpolated.drop('level_0', axis=1, inplace=True)
-    #create z scored data frame, with timedelta index matching behavior 
-    if normalized:
-      normalized_df = pd.DataFrame(np.transpose(normalize(CNMFE_results['C'])), 
-        columns=[int(cell_num) for cell_num in np.linspace(1, len(CNMFE_results['C']), len(CNMFE_results['C']))])
-      C_z_scored = normalized_df
-    else:
-      C_z_scored = pd.DataFrame(np.transpose(z_score_CNMFE(CNMFE_results['C'])), 
-        columns=[int(cell_num) for cell_num in np.linspace(1, len(CNMFE_results['C']), len(CNMFE_results['C']))])
-      C_z_scored['msCamFrame'] = C_z_scored.index.values
-      C_z_scored = C_z_scored.set_index(pd.to_timedelta(np.linspace(0, len(C_z_scored)*(1/20), len(C_z_scored)), unit='s'), drop=False)
+    interpolated = interpolated.set_index(pd.to_timedelta(np.linspace(0, (len(interpolated)-1)*(1/20), len(interpolated)), unit='s'), drop=False)
 
-    return(C_z_scored, interpolated)
+    return(interpolated)
+
+def create_fluorescence_time_delta(fluoresence_data):
+    fluorescence = pd.DataFrame(np.transpose(z_score_CNMFE(fluoresence_data)),
+      columns=[int(cell_num) for cell_num in np.linspace(1, len(fluoresence_data), len(fluoresence_data))])
+    fluorescence['msCamFrame'] = fluorescence.index.values
+    fluorescence = fluorescence.set_index(pd.to_timedelta(np.linspace(0, (len(fluorescence)-1*(1/20)), len(fluorescence)), unit='s'), drop=False)
+    return(fluorescence)
 
 ## triggered averaging for session
 def select_trigger_regions(binned_velocity, activity_threshold, resting_threshold, resting_baseline):
@@ -401,12 +398,11 @@ def select_trigger_regions(binned_velocity, activity_threshold, resting_threshol
   return(np.array(transition_indicies))
 
 #select and average section
-def average_triggered_regions(C_z_scored, transition_indicies, length_samples_to_plot):
+def average_triggered_regions(trace_region, transition_indicies, length_samples_to_plot):
   transition_activity = {}
   for index in transition_indicies:
-    if index < len(C_z_scored):
-      C_z_scored_for_averaging = C_z_scored.drop(['msCamFrame'], axis=1)
-      region = C_z_scored_for_averaging.mean(axis=1)[index-length_samples_to_plot:index+length_samples_to_plot].values
+    if index < len(trace_region):
+      region = trace_region[index-length_samples_to_plot:index+length_samples_to_plot]
       if len(region) == length_samples_to_plot*2:
         transition_activity[index] = region
   return(pd.DataFrame(transition_activity))
@@ -424,10 +420,76 @@ def adjust_triggered_average_plots(binned_velocity, C_z_scored, threshold_activi
 
 def filter_out_by_size(C_z_scored, cell_contours, cell_dims, contour_thresold, cell_size_filter_threshold):
   cells_to_drop = np.array([cell for cell in range(1, len(cell_contours)+1) if len(np.array(np.where(cell_dims[cell]>contour_thresold)[0]))<cell_size_filter_threshold])
-  C_z_scored.drop(cells_to_drop, axis=1, inplace=True)
-  return(C_z_scored)
+  C_z_scored_filtered = C_z_scored.drop(cells_to_drop, axis=1)
+  return(C_z_scored_filtered)
 
-## group triggered average
+
+## spatial coordination index
+
+def create_coordination_index(more_result, less_result):
+  if more_result is None and less_result is not None:
+    if less_result.pvalue == 0:
+        coord_index = 0
+    else:
+        coord_index = math.log(less_result.pvalue, 10)*-1 
+  elif more_result is not None and less_result is not None:
+    if less_result.pvalue > more_result.pvalue:
+      coord_index = math.log(less_result.pvalue, 10)*-1
+    else:
+      coord_index = math.log(more_result.pvalue, 10)
+  elif more_result is not None and less_result is None:
+    coord_index = math.log(more_result.pvalue, 10)
+  else:
+    coord_index = 0
+  return(coord_index)
+
+# analyze spatial coordination by session
+
+def spatial_coordination_by_session(reindexed):
+  """
+  binnums are distance bins for ks testing
+  """
+
+  coactivity_dfs = []
+  cell_pairs = [pair for pair in itertools.combinations(list(reindexed.columns), 2)]
+  for time_index in range(len(reindexed)):
+    coactivity_by_time_point = {}
+    for pair in cell_pairs:
+      if (reindexed.loc[time_index][pair[0]] == 1) and (reindexed.loc[time_index][pair[1]] == 1):
+        coactivity_by_time_point[pair] = 1
+      else:
+        coactivity_by_time_point[pair] = 0
+    coactivity_df = pd.DataFrame(coactivity_by_time_point, index=['coactivity'])
+    coactivity_dfs.append(coactivity_df)
+
+  return(coactivity_dfs)
+
+def compare_spatial_coordination_by_session(coactivity_df, binnums, pairwise_distance):
+
+  ks_results_2sided = []
+  ks_one_sided_more = []
+  ks_one_sided_less = []
+
+  coactive_cell_distances = pairwise_distance[coactivity_df[coactivity_df == 1].dropna(axis=1).columns]
+  non_coactive_distances = pairwise_distance[coactivity_df[coactivity_df == 0].dropna(axis=1).columns]
+
+    #linear_distribution = np.linspace(1, len(coactive_cell_distances.columns), binnums)
+
+  cum_results_coactive = stats.cumfreq(coactive_cell_distances.values[0], numbins=binnums, defaultreallimits=(0, 500))
+  cum_results_non_coactive = stats.cumfreq(non_coactive_distances.values[0], numbins=binnums, defaultreallimits=(0, 500))
+
+    #plt.plot(np.linspace(0, 500, binnums), cum_results_coactive.cumcount/len(coactive_cell_distances.values[0]))
+  less_result = stats.kstest(cum_results_coactive.cumcount/len(coactive_cell_distances.values[0]), 'norm', alternative='less')
+  more_result = stats.kstest(cum_results_coactive.cumcount/len(coactive_cell_distances.values[0]), 'norm', alternative='more')
+  ks_one_sided_more.append(more_result)
+  ks_one_sided_less.append(less_result)
+    
+    #two sided test between coactive and noncoactive distribution 
+  ks_result = stats.ks_2samp(cum_results_coactive.cumcount/len(coactive_cell_distances.values[0]), cum_results_non_coactive.cumcount/len(non_coactive_distances.values[0]))
+  ks_results_2sided.append(ks_result)
+  return(ks_results_2sided, ks_one_sided_more, ks_one_sided_less)
+
+
 
 
 

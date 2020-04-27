@@ -88,13 +88,16 @@ def downsample_and_interpolate(original_df, original_sf, downsampled_sf, interpo
 	interpolated = upsampled.interpolate(method=interpolation_method)
 	return(interpolated)
 
-def bin_by_activity_threshold(df_column, resting_time_threshold, active_time_threshold, resting_threshold, activity_threshold):
+def bin_by_activity_threshold(df_column, resting_time_threshold, active_time_threshold, crossing_threshold, resting_threshold, activity_threshold):
 	moving_bins = np.zeros(len(df_column))
 	for point in range(resting_time_threshold, len(df_column)):
-		if df_column[point] < activity_threshold and not(any(df_column.values[point-resting_time_threshold:point] > resting_threshold)):
+		if df_column[point] < activity_threshold:
 			moving_bins[point] = 0
-		elif df_column[point] > 0.5 and all(df_column.values[point+1:point+active_time_threshold] > activity_threshold):
-			moving_bins[point] = 1
+		elif df_column[point] > crossing_threshold and (np.mean(df_column.values[point+1:point+active_time_threshold] > activity_threshold)):
+			if not(any(df_column.values[point-resting_time_threshold:(point-1)] > resting_threshold)):
+				moving_bins[point] = 1
+			else:
+				moving_bins[point] = 0
 	return(moving_bins)
 
 def extended_bin_by_activity_threshold(rdf_column, resting_time_threshold, active_time_threshold, resting_threshold, activity_threshold):
@@ -160,12 +163,12 @@ def downsample_session_and_bin_C_by_V(downsampled_interval_seconds, number_of_bi
 
 def create_regression_models_per_cell(cells_mean_C_binned_by_V, polynomial_degree):
 	cell_results = {}
-	for cell in range(1, len(list(set([item[0] for item in cells_mean_C_binned_by_V.columns])))+1):
+	num_bins = len(cells_mean_C_binned_by_V)
+	for cell in list(cells_mean_C_binned_by_V.columns):
 		#degree of polynomial model
 		deg = polynomial_degree
-		num_bins = len(cells_mean_C_binned_by_V)
-		x_to_fit = cells_mean_C_binned_by_V[cell]['bin'].values
-		y_to_fit = cells_mean_C_binned_by_V[cell]['C_df_mean'].values
+		x_to_fit = np.linspace(1, num_bins, num_bins)
+		y_to_fit = cells_mean_C_binned_by_V[cell].values
 		#df for stats models
 		fit_data = pd.DataFrame(columns=['y', 'x'])
 		fit_data['y'] = y_to_fit
