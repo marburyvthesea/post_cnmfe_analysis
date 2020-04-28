@@ -464,30 +464,8 @@ def spatial_coordination_by_session(reindexed):
 
   return(coactivity_dfs)
 
-def compare_spatial_coordination_by_session(coactivity_df, binnums, pairwise_distance):
 
-  ks_results_2sided = []
-  ks_one_sided_more = []
-  ks_one_sided_less = []
 
-  coactive_cell_distances = pairwise_distance[coactivity_df[coactivity_df == 1].dropna(axis=1).columns]
-  non_coactive_distances = pairwise_distance[coactivity_df[coactivity_df == 0].dropna(axis=1).columns]
-
-    #linear_distribution = np.linspace(1, len(coactive_cell_distances.columns), binnums)
-
-  cum_results_coactive = stats.cumfreq(coactive_cell_distances.values[0], numbins=binnums, defaultreallimits=(0, 500))
-  cum_results_non_coactive = stats.cumfreq(non_coactive_distances.values[0], numbins=binnums, defaultreallimits=(0, 500))
-
-    #plt.plot(np.linspace(0, 500, binnums), cum_results_coactive.cumcount/len(coactive_cell_distances.values[0]))
-  less_result = stats.kstest(cum_results_coactive.cumcount/len(coactive_cell_distances.values[0]), 'norm', alternative='less')
-  more_result = stats.kstest(cum_results_coactive.cumcount/len(coactive_cell_distances.values[0]), 'norm', alternative='more')
-  ks_one_sided_more.append(more_result)
-  ks_one_sided_less.append(less_result)
-    
-    #two sided test between coactive and noncoactive distribution 
-  ks_result = stats.ks_2samp(cum_results_coactive.cumcount/len(coactive_cell_distances.values[0]), cum_results_non_coactive.cumcount/len(non_coactive_distances.values[0]))
-  ks_results_2sided.append(ks_result)
-  return(ks_results_2sided, ks_one_sided_more, ks_one_sided_less)
 
 
 
