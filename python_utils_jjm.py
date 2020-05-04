@@ -54,11 +54,11 @@ def align_behavior_data(msCam_timestamps, behavCam_timestamps):
 
     return(msCam_timestamps)
 
-def get_ISIs(signal, framerate, cells_list, event_threshold):
+def get_ISIs(signal, framerate, min_bout_len, cells_list, event_threshold):
     event_times = []
     event_ISIs = []
     for cell in cells_list:
-        event_indicies_by_cell = ma.count_events_in_array(signal[cell], framerate, .1, threshold=event_threshold, up=True)[1]
+        event_indicies_by_cell = ma.count_events_in_array(signal[cell].values, framerate, min_bout_len, threshold=event_threshold, up=True)[1]
         event_times_by_cell = ([(1/framerate)*x for x in event_indicies_by_cell])
         event_times.append(event_times_by_cell)
         cell_ISIs = [(event_times_by_cell[event]-event_times_by_cell[event-1]) for event in range(1, len(event_times_by_cell))]
