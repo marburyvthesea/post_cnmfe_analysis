@@ -64,14 +64,18 @@ def align_behavior_data(msCam_timestamps, behavCam_timestamps):
 
 	return(msCam_timestamps)
 
-def downsample_dlc_to_behavior(dlc_tracking_path, timestamps_file):
+def downsample_dlc_to_behavior(dlc_tracking_path, timestamps_file, msCam_camnum=0, behavCam_camnum=1):
+	"""
+	use the timestamps file to get the closest behavior cam frame to each miniscope cam frame
+	typically the mcCam is cam "0" and the behavCam is cam "1" but can change 
+	"""
 	dlc_analysis = pd.read_hdf(dlc_tracking_path)
 	dlc_full = dlc_analysis.droplevel(0)
 	dlc_full = dlc_full.reset_index()
 	frame_clock_df = pd.read_table(timestamps_file)
 	# load time stamps 
-	msCam_timestamps = frame_clock_df[frame_clock_df['camNum'] == 0].set_index('frameNum')
-	behavCam_timestamps = frame_clock_df[frame_clock_df['camNum'] == 1].set_index('frameNum')
+	msCam_timestamps = frame_clock_df[frame_clock_df['camNum'] == msCam_camnum].set_index('frameNum')
+	behavCam_timestamps = frame_clock_df[frame_clock_df['camNum'] == behavCam_camnum].set_index('frameNum')
 	# reset initial clock value to 0 
 	msCam_timestamps['sysClock'][1] = 0
 	behavCam_timestamps['sysClock'][1] = 0

@@ -420,10 +420,10 @@ def adjust_triggered_average_plots(binned_velocity, C_z_scored, threshold_activi
 
 #filter by spatial components 
 
-def filter_out_by_size(C_z_scored, cell_contours, cell_dims, contour_thresold, cell_size_filter_threshold):
+def filter_out_by_size(cell_df_to_filter, cell_contours, cell_dims, contour_thresold, cell_size_filter_threshold):
   cells_to_drop = np.array([cell for cell in range(1, len(cell_contours)+1) if len(np.array(np.where(cell_dims[cell]>contour_thresold)[0]))<cell_size_filter_threshold])
-  C_z_scored_filtered = C_z_scored.drop(cells_to_drop, axis=1)
-  return(C_z_scored_filtered)
+  filtered = cell_df_to_filter.drop(cells_to_drop, axis=1)
+  return(filtered)
 
 
 ## spatial coordination index
@@ -466,6 +466,21 @@ def spatial_coordination_by_session(reindexed):
 
   return(coactivity_dfs)
 
+def create_coactivity_matrix(cell_pairs, orig_df_comparison, time_index):
+  indicies_to_update = []
+  if time_index%1000==0:
+    print(time_index)
+    try:
+      for pair, pair_idx in zip(cell_pairs, range(len(cell_pairs))):
+        if (orig_df_comparison.loc[time_index][pair[0]] == 1) and (orig_df_comparison.loc[time_index][pair[1]] == 1):
+          indicies_to_update.append((time_index, pair_idx))
+        else:
+          pass
+    except TypeError:
+      print(pair)
+      print(pair_idx)
+    return(indicies_to_update)
+    
 
 
 
