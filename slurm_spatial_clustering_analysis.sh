@@ -30,11 +30,11 @@ cd /home/jma819/post_cmfe_analysis
 
 #run clustering analysis
 
-INPUT_cnmfe_file_path = $1
-INPUT_Z_score_threshold = $2
-INPUT_num_procs = $3
-INPUT_dir_path = $4
-INPUT_file_name = $5
+INPUT_cnmfe_file_path=$1
+INPUT_Z_score_threshold=$2
+INPUT_num_procs=$3
+INPUT_dir_path=$4
+INPUT_file_name=$5
 
 
 echo "loading file: $INPUT_cnmfe_file_path"
