@@ -23,7 +23,7 @@ def load_and_bin_fluorescence(CNMFE_file_path, Z_score_threshold):
 		CNMFE_data['for_dims'], 0.6, 100).drop(['msCamFrame'], axis=1)
 	com_filtered = utils_jjm.filter_out_by_size(CNMFE_data['com'].transpose(), CNMFE_data['cell_contours'], 
 												CNMFE_data['for_dims'], 0.6, 100)
-	binned_fluorescence = CNMFE_data_filtered.apply(utils_jjm.binning_function_uncrop, args=[1, Z_score_threshold])
+	binned_fluorescence = CNMFE_data_filtered.apply(utils_jjm.binning_function_uncrop, args=[1, int(Z_score_threshold)])
 
 	return(binned_fluorescence, com_filtered)
 
