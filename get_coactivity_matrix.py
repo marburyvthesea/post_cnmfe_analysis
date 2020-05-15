@@ -42,6 +42,10 @@ def get_coactivity_matrix(input_binned_fluorescence, num_procs):
 
 	# search for indicies with coactivity
 	print('iterating over time points in parallel')
+	print(len(reindexed))
+	print('time points')
+	print(len(cell_indicies))
+	print('cell pairs')
 	print('using procs:') 
 	print(num_procs)
 	p=Pool(num_procs)
