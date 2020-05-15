@@ -2,6 +2,7 @@
 #contents of logfiles
 
 logfiles/*
+.ipynb_checkpoints/*
 
 # Compiled source #
 ###################
