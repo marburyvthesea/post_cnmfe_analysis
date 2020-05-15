@@ -3,6 +3,7 @@
 import pandas as pd
 import python_utils_jjm as utils_jjm 
 import rotarod_analysis as ra
+import numpy as np
 
 
 def map_to_sparse_matrix(cell_pairs, orig_df_comparison, time_index):
