@@ -4,6 +4,10 @@ import pandas as pd
 import python_utils_jjm as utils_jjm 
 import rotarod_analysis as ra
 import numpy as np
+import itertools
+from multiprocessing import Pool
+import functools
+from scipy import sparse
 
 
 def map_to_sparse_matrix(cell_pairs, orig_df_comparison, time_index):
