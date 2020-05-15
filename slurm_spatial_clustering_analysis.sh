@@ -3,7 +3,7 @@
 #SBATCH -p short
 #SBATCH -t 4:00:00
 #SBATCH -o ./logfiles/slurm.%x-%j.out # STDOUT
-#SBATCH --job-name="spatial clustering analysis"
+#SBATCH --job-name="spatial_clustering_analysis"
 #SBATCH -N 1
 #SBATCH -n 12
 #SBATCH --mem=70G
