@@ -42,7 +42,8 @@ def get_coactivity_matrix(input_binned_fluorescence, num_procs):
 
 	# search for indicies with coactivity
 	print('iterating over time points in parallel')
-	print('using procs: ' num_procs)
+	print('using procs:') 
+	print(num_procs)
 	p=Pool(num_procs)
 
 	indicies = [cell_indicies for cell_indicies in list(p.map(functools.partial(map_to_sparse_matrix, cell_pairs, reindexed), range(len(reindexed)))) if len(cell_indicies)>0]
