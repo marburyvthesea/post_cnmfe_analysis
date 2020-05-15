@@ -4,8 +4,8 @@ import sys
 
 
 input_cnmfe_file_path = sys.argv[1]
-input_Z_score_threshold = sys.argv[2]
-input_num_procs = sys.argv[3]
+input_Z_score_threshold = int(sys.argv[2])
+input_num_procs = int(sys.argv[3])
 input_dir_path = sys.argv[4]
 input_file_name = sys.argv[5]
 
