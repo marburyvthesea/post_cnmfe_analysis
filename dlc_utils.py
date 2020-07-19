@@ -9,9 +9,9 @@ def calculate_centroid(dlc_output_df):
 	#df column names
 	df_columns = list(dlc_output_df.columns)
 	#calculate centroid coordiantes 
-	x_centroids = np.zeros(1000)
-	y_centroids = np.zeros(1000)
-	likelihoods = np.zeros(1000)
+	x_centroids = np.zeros(len(dlc_output_df))
+	y_centroids = np.zeros(len(dlc_output_df))
+	likelihoods = np.zeros(len(dlc_output_df))
 	for frame in range(len(dlc_output_df)):
 		x_coordinates = [dlc_output_df[df_columns[0][0]][body_part]['x'].loc[frame] for body_part in list(set([df_columns[item][1] for item in range(len(df_columns))]))]
 		x_centroid = sum(x_coordinates)/len(x_coordinates)
@@ -44,6 +44,14 @@ def return_velocity_dataframe(df_input):
 	df_columns = list(coordinates_delta_df.columns)
 	velocity_df = pd.DataFrame(np.transpose(np.array([np.array([velocity(coordinates_delta_df[body_part]['x'].values[frame],coordinates_delta_df[body_part]['y'].values[frame]) for frame in range(len(coordinates_delta_df))]) for body_part in list(set([df_columns[item][1] for item in range(len(df_columns))]))])), columns=list(set([df_columns[item][1] for item in range(len(df_columns))]))) 
 	return(velocity_df)
+
+def velocity_df_from_difference_df(difference_df):
+	df_columns = list(difference_df.columns)
+	velocity_df = pd.DataFrame(np.transpose(np.array([np.array([velocity(difference_df[body_part]['x'].values[frame],difference_df[body_part]['y'].values[frame]) 
+								for frame in range(len(difference_df))]) for body_part in list(set([df_columns[item][0] 
+								for item in range(len(df_columns))]))])), columns=list(set([df_columns[item][0] for item in range(len(df_columns))]))) 
+	return(velocity_df)
+
 
 def align_behavior_data(msCam_timestamps, behavCam_timestamps):
 	"""returns msCam Df with aligned timestamps
