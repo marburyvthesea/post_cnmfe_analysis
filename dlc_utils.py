@@ -102,9 +102,13 @@ def downsample_and_interpolate(original_df, original_sf, downsampled_sf, interpo
 
 def bin_by_activity_threshold(df_column, resting_time_threshold, active_time_threshold, crossing_threshold, resting_threshold, activity_threshold):
 	moving_bins = np.zeros(len(df_column))
+	# test if each point in df column is above the activity threshold
+	# start at sample point that is equivalent to the length of samples of the resting period
 	for point in range(resting_time_threshold, len(df_column)):
 		if df_column[point] < activity_threshold:
 			moving_bins[point] = 0
+		# if the sample point is above the activity theshold, also check if the resting period is below threshold and the activity
+		# lasts for the active time threshold
 		elif df_column[point] > crossing_threshold and (np.mean(df_column.values[point+1:point+active_time_threshold] > activity_threshold)):
 			if not(any(df_column.values[point-resting_time_threshold:(point-1)] > resting_threshold)):
 				moving_bins[point] = 1
@@ -112,7 +116,26 @@ def bin_by_activity_threshold(df_column, resting_time_threshold, active_time_thr
 				moving_bins[point] = 0
 	return(moving_bins)
 
-def extended_bin_by_activity_threshold(rdf_column, resting_time_threshold, active_time_threshold, resting_threshold, activity_threshold):
+def bin_by_resting_threshold(df_column, resting_time_threshold, active_time_threshold, crossing_threshold, resting_threshold, activity_threshold):
+	moving_bins = np.zeros(len(df_column))
+	for point in range(active_time_threshold, len(df_column)):
+		if df_column[point] > activity_threshold:
+			moving_bins[point] = 0
+		elif df_column[point] < crossing_threshold and not(np.mean(df_column.values[point+1:point+resting_time_threshold] > resting_threshold)):
+			if (any(df_column.values[point-active_time_threshold:(point-1)] > activity_threshold)):
+				moving_bins[point] = 1
+			else:
+				moving_bins[point] = 0
+	return(moving_bins)
+
+def select_trigger_regions(binned_velocity, activity_threshold, resting_threshold, resting_baseline):
+	transition_indicies = []
+	for point in range(resting_baseline, len(binned_velocity)-resting_baseline):
+		if binned_velocity[point]>activity_threshold and not any(binned_velocity[int(point-resting_baseline):point]>resting_threshold):
+			transition_indicies.append(point)
+	return(np.array(transition_indicies))
+
+def extended_bin_by_activity_threshold(df_column, resting_time_threshold, active_time_threshold, resting_threshold, activity_threshold):
 	moving_bins_extended = np.zeros(len(df_column))
 	point = 0
 	while point < len(df_column):
