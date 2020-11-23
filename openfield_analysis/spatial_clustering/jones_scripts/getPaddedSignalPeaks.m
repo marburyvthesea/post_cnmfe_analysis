@@ -15,7 +15,7 @@ function [paddedSignalPeaks] = getPaddedSignalPeaks(signalPeaksUnpadded)
 	for cell = 1:numCells;
 		for frame = 1:numFrames-4;
 			if signalPeaksUnpadded(cell, frame) == 1;
-				paddedSignalPeaks(cell, frame:frame+4) = ones(1,5)
+				paddedSignalPeaks(cell, frame:frame+4) = ones(1,5);
 			end
 		end
 	end
