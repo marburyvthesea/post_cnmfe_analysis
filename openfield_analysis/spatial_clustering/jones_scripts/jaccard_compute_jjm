@@ -1,0 +1,19 @@
+
+
+%add path to Jones's scripts 
+addpath(genpath('/projects/p30771/miniscope/analysis/OpenFieldAnalysis/spatial_clusters/jones_script_analysis/')); 
+
+%load filtered fluorescence traces from python output
+cell_eg = readtable('/projects/p30771/miniscope/analysis/OpenFieldAnalysis/spatial_clusters/jones_script_analysis/data/GRIN034_H16_M13_S22_filtered_f_traces.csv', 
+	'ReadVariableNames', true);
+
+%remove nonnumeric variables
+cell_eg_numeric = removevars(cell_eg,{'Var1','msCamFrame','velocity_bins'})
+
+%convert to array
+cell_traces = table2array(cell_eg_numeric);
+
+% get "peaks" in signal, F/F0 above a, here 2.5, SD threshold
+[signalPeaks, ~, ~] = computeSignalPeaks(cell_traces, 'doMovAvg', 0, 'reportMidpoint', 1, 'numStdsForThresh', 2.5);
+
+

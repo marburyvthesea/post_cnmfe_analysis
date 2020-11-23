@@ -1,4 +1,4 @@
-
+)
 cellXYcoords = csvread('C:\Users\jgp3408\Dropbox\Shared_Folders\John Marshall\testData\GRIN026_H16_M35_S34_com.csv', 1, 1); %exclude first row and first column
 
 cell_traces = csvread('C:\Users\jgp3408\Dropbox\Shared_Folders\John Marshall\testData\GRIN026_H16_M35_S34_cells_f_traces_filtered.csv', 1, 1);
