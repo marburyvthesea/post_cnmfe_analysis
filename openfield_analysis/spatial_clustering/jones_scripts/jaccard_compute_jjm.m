@@ -66,6 +66,8 @@ maxDist = 500;%compare out to 500 um
 binSize = 20;%compare in 20 um bins
 numBins = maxDist/binSize-1;%throw out the first bin (overlapping cells)
 binVector = 20:binSize:maxDist;%cells must be atleast 20um apart. 
+numFrames = length(signalPeaks);
+numCells = size(cellXYcoords, 1);
 
 disp('computing jaccard scores')
 
