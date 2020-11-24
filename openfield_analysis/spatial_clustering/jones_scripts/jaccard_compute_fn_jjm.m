@@ -1,24 +1,21 @@
 
-
-%add path to data 
+function[sessionOutput] = jaccard_compute_fn_jjm(dataDir, session, sdThreshold, pixelScale, maxDist, binSize)
+%%add path to data 
 %addpath(genpath('/projects/p30771/miniscope/analysis/OpenFieldAnalysis/spatial_clusters/jones_script_analysis/')); 
-addpath(genpath('/Volumes/My_Passport/cnmfe_analysis_files/OpenFieldAnalysis/2020/D1_mGluRKO_clustering/data/'));
+addpath(genpath(dataDir));
 %add path to scripts
 %addpath(genpath('/home/jma819/post_cmfe_analysis'));
 
 %session to load
-
-dir_path = '/Volumes/My_Passport/cnmfe_analysis_files/OpenFieldAnalysis/2020/D1_mGluRKO_clustering/data/';
-session = 'GRIN026_H16_M35_S34';
-save_path = strcat(dir_path, session, '_');
-
+save_path = strcat(dataDir, session, '_');
 
 %load filtered fluorescence traces from python output
 disp('loading data')
-cell_eg = readtable(strcat(dir_path,session,'_filtered_f_traces.csv'),'ReadVariableNames', true);
+disp(session)
+cell_eg = readtable(strcat(dataDir,session,'_filtered_f_traces.csv'),'ReadVariableNames', true);
 
 %cell centroids 
-cellXYcoords = csvread(strcat(dir_path,session,'_com.csv'),1, 1);
+cellXYcoords = csvread(strcat(dataDir,session,'_com.csv'),1, 1);
 
 %remove nonnumeric variables
 cell_eg_numeric = removevars(cell_eg,{'Var1','msCamFrame','velocity_bins'});
@@ -30,8 +27,8 @@ cell_traces = cell_traces';
 
 disp('finding signal peaks')
 
-% get "peaks" in signal, F/F0 above a, here 2.5, SD threshold
-[signalPeaks, ~, ~] = computeSignalPeaks(cell_traces, 'doMovAvg', 0, 'reportMidpoint', 1, 'numStdsForThresh', 2.5);
+%%get "peaks" in signal, F/F0 above a, here 2.5, SD threshold
+[signalPeaks, ~, ~] = computeSignalPeaks(cell_traces, 'doMovAvg', 0, 'reportMidpoint', 1, 'numStdsForThresh', sdThreshold);
 
 %in the PD paper, we pad each 'event' to make is 1-s duration. Note that we
 %no longer do this with our GCaMP7f data, but I would do it with GCaMP6
@@ -47,7 +44,7 @@ paddedSignalPeaks = getPaddedSignalPeaks(signalPeaks);
 %microscope and image a grid slide to determine the pixel size of your
 %microscope after all the processing steps.
 
-cellDistances = pdist(cellXYcoords, 'euclidean')*2.5;%distances multiplied by 2.5 = microns
+cellDistances = pdist(cellXYcoords, 'euclidean')*pixelScale;%distances multiplied by 2.5 = microns
 
 %we often want to compare treatments and behavioral states (e.g., periods
 %of movement during amphetamine treatment). I am just going to analyse all
@@ -65,8 +62,6 @@ within_frames_to_analyze = 1: size(cell_traces, 2);
 %high correlations because they are spatially overlapped (although I don't
 %think this is a huge program with CNMFe, because it merges these cells)
 
-maxDist = 500;%compare out to 500 um
-binSize = 20;%compare in 20 um bins
 numBins = maxDist/binSize-1;%throw out the first bin (overlapping cells)
 binVector = 20:binSize:maxDist;%cells must be atleast 20um apart. 
 numFrames = length(signalPeaks);
@@ -87,7 +82,17 @@ csvwrite(strcat(save_path,'normlBinnedCellJaccards','.csv'), normlBinnedCellJacc
 csvwrite(strcat(save_path,'normlShuffledBinnedCellJaccards','.csv'), normlShuffledBinnedCellJaccards);
 csvwrite(strcat(save_path,'proximalPairIndices','.csv'), proximalPairIndices);
 
+%% save parameters to structure
+analysisParams = struct('session', session, 'sdThreshold', sdThreshold, 'pixelScaleFactor', pixelScale, 'maxDistanceForBinning', ... 
+						maxDist, 'binSize', binSize);
 
+%% output to structure
+sessionOutput = struct('CellJaccards', CellJaccards, 'ShuffledCellJaccards', ShuffledCellJaccards, ...
+						'normlBinnedCellJaccards', normlBinnedCellJaccards, 'normlShuffledBinnedCellJaccards', ...
+						normlShuffledBinnedCellJaccards, 'proximalPairIndices', proximalPairIndices, 'binVector', binVector, ...
+						'analysisParameters', analysisParams);
+
+end
 
 
 
