@@ -24,6 +24,8 @@ cell_eg_numeric = removevars(cell_eg,{'Var1','msCamFrame','velocity_bins'});
 
 %convert to array
 cell_traces = table2array(cell_eg_numeric);
+%convert to nCells x nFrames matrix
+cell_traces = cell_traces';
 
 disp('finding signal peaks')
 
