@@ -14,7 +14,7 @@ import time
 
 ## add tkinter module for selecting matlab output file
 
-# check if file has a filed with link to demixed videos, if not create demixed videos
+# check if file has a field with link to demixed videos, if not create demixed videos
 
 # after file selected
 

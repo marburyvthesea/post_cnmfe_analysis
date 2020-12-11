@@ -44,7 +44,12 @@ paddedSignalPeaks = getPaddedSignalPeaks(signalPeaks);
 %microscope and image a grid slide to determine the pixel size of your
 %microscope after all the processing steps.
 
-cellDistances = pdist(cellXYcoords, 'euclidean')*pixelScale;%distances multiplied by 2.5 = microns
+cellDistances = pdist(cellXYcoords, 'euclidean')*pixelScale;
+%distances multiplied by pixels/microns
+% f=12, 0.9
+% f=15, 0.96
+% f=20, 1.02
+
 
 %we often want to compare treatments and behavioral states (e.g., periods
 %of movement during amphetamine treatment). I am just going to analyse all
