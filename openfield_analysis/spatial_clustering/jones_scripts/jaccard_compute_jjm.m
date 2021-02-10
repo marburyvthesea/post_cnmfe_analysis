@@ -56,7 +56,7 @@ paddedSignalPeaks = getPaddedSignalPeaks(signalPeaks);
 %convert cellXYcoords table to array
 size_com_table = size(cellXYcoords);
 XY_coords_array = table2array(cellXYcoords(:,2:size_com_table(1,2))); 
-XY_coords_array = XY_coords_array'
+XY_coords_array = XY_coords_array';
 
 cellDistances = pdist(XY_coords_array, 'euclidean')*2.5;%distances multiplied by 2.5 = microns
 %ouput squareform array for comparison in python later 
