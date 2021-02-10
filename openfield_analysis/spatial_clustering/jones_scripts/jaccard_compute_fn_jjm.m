@@ -12,10 +12,10 @@ save_path = strcat(dataDir, session, '_');
 %load filtered fluorescence traces from python output
 disp('loading data')
 disp(session)
-cell_eg = readtable(strcat(dir_path,session,'_C_traces_filtered.csv'),'ReadVariableNames', true);
+cell_eg = readtable(strcat(dataDir, session,'_C_traces_filtered.csv'),'ReadVariableNames', true);
 
 %cell centroids 
-cellXYcoords = csvread(strcat(dataDir,session,'_com.csv'),1, 1);
+cellXYcoords = readtable(strcat(dataDir,session,'_com_filtered.csv'), 'ReadVariableNames', true);
 
 %remove nonnumeric variables
 %cell_eg_numeric = removevars(cell_eg,{'Var1','msCamFrame','velocity_bins'});
