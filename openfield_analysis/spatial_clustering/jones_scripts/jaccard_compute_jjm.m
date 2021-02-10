@@ -1,30 +1,35 @@
 
 
 %add path to data 
-%addpath(genpath('/projects/p30771/miniscope/analysis/OpenFieldAnalysis/spatial_clusters/jones_script_analysis/')); 
-addpath(genpath('/Volumes/My_Passport/cnmfe_analysis_files/OpenFieldAnalysis/2020/D1_mGluRKO_clustering/data/'));
+addpath(genpath('/projects/p30771/miniscope/analysis/OpenFieldAnalysis/spatial_clusters/jones_script_analysis/data/')); 
+%addpath(genpath('/Volumes/My_Passport/cnmfe_analysis_files/OpenFieldAnalysis/2020/D1_mGluRKO_clustering/data/'));
 %add path to scripts
-%addpath(genpath('/home/jma819/post_cmfe_analysis'));
+addpath(genpath('/home/jma819/post_cmfe_analysis'));
 
 %session to load
 
-dir_path = '/Volumes/My_Passport/cnmfe_analysis_files/OpenFieldAnalysis/2020/D1_mGluRKO_clustering/data/';
-session = 'GRIN026_H16_M35_S34';
+dir_path = '/projects/p30771/miniscope/analysis/OpenFieldAnalysis/spatial_clusters/jones_script_analysis/data/wt/';
+session = 'GRIN039_H12_M26_S54';
 save_path = strcat(dir_path, session, '_');
 
 
 %load filtered fluorescence traces from python output
 disp('loading data')
-cell_eg = readtable(strcat(dir_path,session,'_filtered_f_traces.csv'),'ReadVariableNames', true);
+cell_eg = readtable(strcat(dir_path,session,'_C_traces_filtered.csv'),'ReadVariableNames', true);
+
+%variable names in the table will be x1, x2 etc... for cell 1, cell 2 
 
 %cell centroids 
-cellXYcoords = csvread(strcat(dir_path,session,'_com.csv'),1, 1);
+cellXYcoords = readtable(strcat(dir_path,session,'_com_filtered.csv'), 'ReadVariableNames', true);
 
 %remove nonnumeric variables
-cell_eg_numeric = removevars(cell_eg,{'Var1','msCamFrame','velocity_bins'});
+%cell_eg_numeric = removevars(cell_eg,{'Var1','msCamFrame','velocity_bins'});
 
 %convert to array
-cell_traces = table2array(cell_eg_numeric);
+%remove 1st column, which is just index 
+size_array = size(cell_eg);
+
+cell_traces = table2array(cell_eg(:,2:size_array(1,2)));
 %convert to nCells x nFrames matrix
 cell_traces = cell_traces';
 
@@ -39,6 +44,7 @@ disp('finding signal peaks')
 
 disp('padding signal peaks')
 
+%should adjust padded signal peaks to work with different input sampling intervals 
 paddedSignalPeaks = getPaddedSignalPeaks(signalPeaks);
 
 
@@ -47,7 +53,14 @@ paddedSignalPeaks = getPaddedSignalPeaks(signalPeaks);
 %microscope and image a grid slide to determine the pixel size of your
 %microscope after all the processing steps.
 
-cellDistances = pdist(cellXYcoords, 'euclidean')*2.5;%distances multiplied by 2.5 = microns
+%convert cellXYcoords table to array
+size_com_table = size(cellXYcoords);
+XY_coords_array = table2array(cellXYcoords(:,2:size_com_table(1,2))); 
+XY_coords_array = XY_coords_array'
+
+cellDistances = pdist(XY_coords_array, 'euclidean')*2.5;%distances multiplied by 2.5 = microns
+%ouput squareform array for comparison in python later 
+cellDistances_squareform = squareform(cellDistances); 
 
 %we often want to compare treatments and behavioral states (e.g., periods
 %of movement during amphetamine treatment). I am just going to analyse all
