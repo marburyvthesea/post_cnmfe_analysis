@@ -22,9 +22,9 @@ size_array = size(sessions);
 batchData = cell(size_array(1,1), 1);
 
 for session = 1:size_array(1,1);
-	disp(KO_sessions{session, :});
+	disp(sessions{session, :});
 	% inputs = (dataDir, session, sdThreshold, pixelScale, maxDist, binSize)
-	sessionOutput = jaccard_compute_fn_jjm(dataDirectory, KO_sessions{session, :}, 2.5, 1, 500, 20);
+	sessionOutput = jaccard_compute_fn_jjm(dataDirectory, sessions{session, :}, 2.5, 1, 500, 20);
 	batchData{session, 1} = sessionOutput ;
 end
 
