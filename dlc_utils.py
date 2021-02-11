@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import math
 from tqdm import tqdm
-import statsmodels.formula.api as smf
+#import statsmodels.formula.api as smf
 
 def calculate_centroid(dlc_output_df):
 	#df column names
@@ -195,27 +195,27 @@ def downsample_session_and_bin_C_by_V(downsampled_interval_seconds, number_of_bi
 
 	return(C_by_v_df, C_by_v_means_df)
 
-def create_regression_models_per_cell(cells_mean_C_binned_by_V, polynomial_degree):
-	cell_results = {}
-	num_bins = len(cells_mean_C_binned_by_V)
-	for cell in list(cells_mean_C_binned_by_V.columns):
-		#degree of polynomial model
-		deg = polynomial_degree
-		x_to_fit = np.linspace(1, num_bins, num_bins)
-		y_to_fit = cells_mean_C_binned_by_V[cell].values
-		#df for stats models
-		fit_data = pd.DataFrame(columns=['y', 'x'])
-		fit_data['y'] = y_to_fit
-		fit_data['x'] = x_to_fit
-		fit_data.dropna(inplace=True)
+#def create_regression_models_per_cell(cells_mean_C_binned_by_V, polynomial_degree):
+#	cell_results = {}
+#	num_bins = len(cells_mean_C_binned_by_V)
+#	for cell in list(cells_mean_C_binned_by_V.columns):
+#		#degree of polynomial model
+#		deg = polynomial_degree
+#		x_to_fit = np.linspace(1, num_bins, num_bins)
+#		y_to_fit = cells_mean_C_binned_by_V[cell].values
+#		#df for stats models
+#		fit_data = pd.DataFrame(columns=['y', 'x'])
+#		fit_data['y'] = y_to_fit
+#		fit_data['x'] = x_to_fit
+#		fit_data.dropna(inplace=True)
 
 		# poly1d object for ease of plotting
-		p1d = np.poly1d(np.polyfit(fit_data['x'].values, fit_data['y'].values, deg))
-		model = np.poly1d(np.polyfit(fit_data['x'].values, fit_data['y'].values, deg))
-		results = smf.ols(formula='y ~ model(x)', data=fit_data).fit()
-		cell_results[cell] = {'p1d' : p1d, 'model' : model, 'statsmodel_results' : results, 'fit_df' : fit_data}
+#		p1d = np.poly1d(np.polyfit(fit_data['x'].values, fit_data['y'].values, deg))
+#		model = np.poly1d(np.polyfit(fit_data['x'].values, fit_data['y'].values, deg))
+#		results = smf.ols(formula='y ~ model(x)', data=fit_data).fit()
+#		cell_results[cell] = {'p1d' : p1d, 'model' : model, 'statsmodel_results' : results, 'fit_df' : fit_data}
 
-	return(cell_results)
+#	return(cell_results)
 
 def plot_cell_regression(regression_results, cell, cells_mean_C_binned_by_V):
 
