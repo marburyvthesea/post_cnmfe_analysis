@@ -78,7 +78,7 @@ def downsample_dlc_to_behavior(dlc_tracking_path, timestamps_file, msCam_camnum=
 	"""
 	dlc_analysis = pd.read_hdf(dlc_tracking_path)
 	dlc_full = dlc_analysis.droplevel(0)
-	dlc_full = dlc_full.reset_index()
+	dlc_full = dlc_full.reset_index(drop=True)
 	frame_clock_df = pd.read_table(timestamps_file)
 	# load time stamps 
 	msCam_timestamps = frame_clock_df[frame_clock_df['camNum'] == msCam_camnum].set_index('frameNum')
@@ -90,8 +90,11 @@ def downsample_dlc_to_behavior(dlc_tracking_path, timestamps_file, msCam_camnum=
 	msCam_timestamps = align_behavior_data(msCam_timestamps, behavCam_timestamps)
 	msCam_timestamps.reset_index(inplace=True)
 	#select only the behaviorcam frames closely matching msCam frames 
-	ms_aligned = dlc_full.iloc[[row for row in msCam_timestamps['behavCam_frames'].values if row<len(dlc_full)],:]
-	return(ms_aligned)
+	ms_aligned = dlc_full.iloc[[row-1 for row in msCam_timestamps['behavCam_frames'].values if row<len(dlc_full)],:]
+	ms_aligned.reset_index(inplace=True, drop=True)
+	aligned_out = pd.concat([ms_aligned, msCam_timestamps.reset_index().loc[:len(ms_aligned)-1]], axis=1)
+
+	return(aligned_out)
 
 def downsample_and_interpolate(original_df, original_sf, downsampled_sf, interpolation_method):
 	downsampled = original_df.resample(downsampled_sf).mean()
