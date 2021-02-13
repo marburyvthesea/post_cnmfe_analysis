@@ -1,0 +1,15 @@
+
+
+
+## running interactive job on quest
+
+srun -A p30771 -p short -N 1 --ntasks-per-node=8 --mem-per-cpu=4G --time=04:00:00 --pty bash -l
+
+hostname = qnode
+
+module load python/anaconda3.6
+
+jupyter notebook --port=8887 --no-browser
+
+
+ssh -L 8887:localhost:8887 jma819@quest.northwestern.edu ssh -N -L 8887:localhost:8887 qnode0019
