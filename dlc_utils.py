@@ -58,7 +58,7 @@ def align_behavior_data(msCam_timestamps, behavCam_timestamps):
 	#lists of ms cam and behavcam time stamps from time_stamps_df 
 	behavCam_frames = []
 	sys_clock_behavCam = []
-	for msCam_frame in tqdm(range(0+1, len(msCam_timestamps)+1)):
+	for msCam_frame in tqdm(list(msCam_timestamps.index)):
 		#get sys clock time of each miniscope recorded frame
 		#sys_clock_msCam = time_stamps['sysClock'].loc[msCam_frame]
 		#find behav cam frame closest to sys clock time of ms frame
