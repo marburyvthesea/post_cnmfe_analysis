@@ -13,3 +13,5 @@ jupyter notebook --port=8887 --no-browser
 
 
 ssh -L 8887:localhost:8887 jma819@quest.northwestern.edu ssh -N -L 8887:localhost:8887 qnode0019
+
+ssh -L $port:localhost:$port jma819@quest.northwestern.edu ssh -N -L $port:localhost:$port qnode5020
