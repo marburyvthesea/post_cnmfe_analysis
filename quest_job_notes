@@ -15,3 +15,6 @@ jupyter notebook --port=8887 --no-browser
 ssh -L 8887:localhost:8887 jma819@quest.northwestern.edu ssh -N -L 8887:localhost:8887 qnode0019
 
 ssh -L $port:localhost:$port jma819@quest.northwestern.edu ssh -N -L $port:localhost:$port qnode5020
+
+
+scp behavCam$behavCamDLC_resnet50_Open_Field_v2Jan27shuffle1_150000_labeled.mp4 jma819@quest.northwestern.edu:/projects/b1118/behaviorvideos/GRIN012_H17_M46_S35/
