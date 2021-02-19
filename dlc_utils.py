@@ -96,8 +96,8 @@ def downsample_dlc_to_behavior(dlc_tracking_path, timestamps_file, msCam_camnum=
 	typically the mcCam is cam "0" and the behavCam is cam "1" but can change 
 	"""
 	dlc_analysis = pd.read_hdf(dlc_tracking_path)
-	dlc_full = dlc_analysis.droplevel(0)
-	dlc_full = dlc_full.reset_index(drop=True)
+	#dlc_full = dlc_analysis.droplevel(0)
+	#dlc_full = dlc_full.reset_index(drop=True)
 	frame_clock_df = pd.read_table(timestamps_file)
 	# load time stamps 
 	msCam_timestamps = frame_clock_df[frame_clock_df['camNum'] == msCam_camnum].set_index('frameNum')
