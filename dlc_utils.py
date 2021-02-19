@@ -4,6 +4,25 @@ import math
 from tqdm import tqdm
 #import statsmodels.formula.api as smf
 
+def get_matched_threshold_crossings(input_array, threshold):
+	crossing_points = []
+	negative_crossings = []
+	for point in range(len(input_array)):
+		#look for where acceleration crosses threshold
+		if input_array[point]>threshold:
+			crossing_points.append(point)
+			#find point where acceleration crosses negative threshold again
+			i = point
+			crossed_neg_threshold=False
+			while i < (len(input_array)) and crossed_neg_threshold==False:
+				if input_array[i]<(threshold*-1):
+					negative_crossing.append(i+1)
+					crossed_neg_threshold=True
+				i+=1
+	indicies_to_cut = list(zip(crossing_points, negative_crossing))
+	return(indicies_to_cut)
+
+
 def calculate_centroid(dlc_output_df):
 	#df column names
 	df_columns = list(dlc_output_df.columns)
