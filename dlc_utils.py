@@ -16,7 +16,7 @@ def get_matched_threshold_crossings(input_array, threshold):
 			crossed_neg_threshold=False
 			while i < (len(input_array)) and crossed_neg_threshold==False:
 				if input_array[i]<(threshold*-1):
-					negative_crossing.append(i+1)
+					negative_crossings.append(i+1)
 					crossed_neg_threshold=True
 				i+=1
 	indicies_to_cut = list(zip(crossing_points, negative_crossing))
