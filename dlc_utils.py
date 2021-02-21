@@ -4,7 +4,7 @@ import math
 from tqdm import tqdm
 #import statsmodels.formula.api as smf
 
-def get_behavCam_avi_index(frame_number)
+def get_behavCam_avi_index(frame_number):
 	#works for 30fps behavior cam frame rate, 1000 frames / file
 	behavCam_video = int(frame_number/1000)
 	frames_within_video =frame_number%1000
