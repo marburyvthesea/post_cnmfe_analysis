@@ -10,6 +10,25 @@ def get_behavCam_avi_index(frame_number)
 	frames_within_video =frame_number%1000
 	return(behavCam_video, frames_within_video)
 
+def get_matched_threshold_crossings(input_array, threshold):
+	crossing_points = []
+	negative_crossings = []
+	for point in range(len(input_array)):
+		#look for where acceleration crosses threshold
+		if input_array[point]>threshold:
+			crossing_points.append(point)
+			#find point where acceleration crosses negative threshold again
+			i = point
+			crossed_neg_threshold=False
+			while i < (len(input_array)) and crossed_neg_threshold==False:
+				if input_array[i]<(threshold*-1):
+					negative_crossings.append(i+1)
+					crossed_neg_threshold=True
+				i+=1
+	indicies_to_cut = list(zip(crossing_points, negative_crossings))
+	return(indicies_to_cut)
+
+
 def calculate_centroid(dlc_output_df):
 	#df column names
 	df_columns = list(dlc_output_df.columns)
@@ -64,7 +83,7 @@ def align_behavior_data(msCam_timestamps, behavCam_timestamps):
 	#lists of ms cam and behavcam time stamps from time_stamps_df 
 	behavCam_frames = []
 	sys_clock_behavCam = []
-	for msCam_frame in tqdm(range(0+1, len(msCam_timestamps)+1)):
+	for msCam_frame in tqdm(list(msCam_timestamps.index)):
 		#get sys clock time of each miniscope recorded frame
 		#sys_clock_msCam = time_stamps['sysClock'].loc[msCam_frame]
 		#find behav cam frame closest to sys clock time of ms frame
@@ -82,9 +101,9 @@ def downsample_dlc_to_behavior(dlc_tracking_path, timestamps_file, msCam_camnum=
 	use the timestamps file to get the closest behavior cam frame to each miniscope cam frame
 	typically the mcCam is cam "0" and the behavCam is cam "1" but can change 
 	"""
-	dlc_analysis = pd.read_hdf(dlc_tracking_path)
-	dlc_full = dlc_analysis.droplevel(0)
-	dlc_full = dlc_full.reset_index(drop=True)
+	dlc_full = pd.read_hdf(dlc_tracking_path)
+	#dlc_full = dlc_analysis.droplevel(0)
+	#dlc_full = dlc_full.reset_index(drop=True)
 	frame_clock_df = pd.read_table(timestamps_file)
 	# load time stamps 
 	msCam_timestamps = frame_clock_df[frame_clock_df['camNum'] == msCam_camnum].set_index('frameNum')

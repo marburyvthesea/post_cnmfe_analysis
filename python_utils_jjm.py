@@ -362,10 +362,10 @@ def create_contour_layouts(spatial_components, dims=(752, 480)):
 
 # match behavior tracking file with cnmfe file
 
-def find_behavior_tracking(cnmfe_file, cnmfe_file_dict):
+def find_behavior_tracking(cnmfe_file, cnmfe_file_dict, suffix):
   animal = cnmfe_file_dict[cnmfe_file][0]
   session = cnmfe_file_dict[cnmfe_file][1]
-  path_to_tracking = animal +'_' + session + '/' + animal + '_' + session + '_dlc_tracking_foranalysis_04142020.csv'
+  path_to_tracking = animal +'_' + session + '/' + animal + '_' + session + '_dlc_tracking_foranalysis_' + suffix + '.csv'
   
   return(path_to_tracking)
 
