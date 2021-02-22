@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 def get_behavCam_avi_index(frame_number):
 	#works for 30fps behavior cam frame rate, 1000 frames / file
-	behavCam_video = int(frame_number/1000)
+	behavCam_video = int(frame_number/1000)+1
 	frames_within_video =frame_number%1000
 	return(behavCam_video, frames_within_video)
 
