@@ -138,7 +138,7 @@ def bin_by_activity_threshold_2(df_column, resting_time_threshold, active_time_t
 		if df_column[point] < activity_threshold:
 			moving_bins[point] = 0
 		#test if the mean of values before the threshold is below a certain level, i.e. starts from rest
-		elif df_column[point] > crossing_threshold and (np.mean(point-resting_time_threshold:(point-1) < resting_threshold))
+		elif df_column[point] > crossing_threshold and (np.mean(df_column.values[point-resting_time_threshold:(point-1)]) < resting_threshold):
 			# test if the velocity remains above a given value for set period
 			if not(any(df_column.values[point+1:point+active_time_threshold] < activity_threshold)):
 				moving_bins[point] = 1
