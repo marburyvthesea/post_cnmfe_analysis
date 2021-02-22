@@ -4,6 +4,9 @@ import math
 from tqdm import tqdm
 #import statsmodels.formula.api as smf
 
+def nearest(items, to_compare):
+    return min(items, key=lambda x: abs(x-to_compare))
+
 def get_behavCam_avi_index(frame_number):
 	#works for 30fps behavior cam frame rate, 1000 frames / file
 	behavCam_video = int(frame_number/1000)+1
