@@ -4,6 +4,18 @@ import math
 from tqdm import tqdm
 #import statsmodels.formula.api as smf
 
+def get_movement_offset_point(movement_onset_points, threshold, session_data):
+	rest_crossing_thresholds = []
+	for movement_onset_point in movement_onset_points:
+		i = movement_onset_point
+		comp = lambda x : x>activity_threshold
+		while i <= len(session_data) and comp(session_data.iloc[i])==True:
+			i+=1
+			if comp(session_data.iloc[i])==False:
+				rest_crossing_thresholds.append(i)
+				break
+	return(rest_crossing_thresholds)
+	
 def nearest(items, to_compare):
     return min(items, key=lambda x: abs(x-to_compare))
 
@@ -30,7 +42,6 @@ def get_matched_threshold_crossings(input_array, threshold):
 				i+=1
 	indicies_to_cut = list(zip(crossing_points, negative_crossings))
 	return(indicies_to_cut)
-
 
 def calculate_centroid(dlc_output_df):
 	#df column names
