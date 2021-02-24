@@ -130,6 +130,22 @@ def downsample_and_interpolate(original_df, original_sf, downsampled_sf, interpo
 	interpolated = upsampled.interpolate(method=interpolation_method)
 	return(interpolated)
 
+def bin_by_activity_threshold_return_column(df_column, resting_time_threshold, active_time_threshold, crossing_threshold, resting_threshold, activity_threshold):
+	moving_bins = np.zeros(len(df_column))
+	# test if each point in df column is above the activity threshold
+	# start at sample point that is equivalent to the length of samples of the resting period
+	for point in range(resting_time_threshold, len(df_column)):
+		if df_column[point] < activity_threshold:
+			moving_bins[point] = 0
+		#test if the mean of values before the threshold is below a certain level, i.e. starts from rest
+		elif df_column[point] > crossing_threshold and (np.mean(df_column.values[point-resting_time_threshold:(point-1)]) < resting_threshold):
+			# test if the velocity remains above a given value for set period
+			if not(any(df_column.values[point+1:point+active_time_threshold] < activity_threshold)):
+				moving_bins[point] = 1
+			else:
+				moving_bins[point] = 0
+	return(moving_bins)
+
 def bin_by_activity_threshold_2(df_column, resting_time_threshold, active_time_threshold, crossing_threshold, resting_threshold, activity_threshold):
 	moving_bins = np.zeros(len(df_column))
 	# test if each point in df column is above the activity threshold
