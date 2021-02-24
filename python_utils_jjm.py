@@ -94,7 +94,7 @@ def binning_function_uncrop(z_scored_cell_column, bin_increment_samples, z_score
         bin_end += bin_increment_samples
     return(np.array(binned))
 
-def binning_function_uncrop_array(z_scored_cell_column, bin_increment_samples, z_score_threshold):
+def binning_function_uncrop_array(z_scored_cell, bin_increment_samples, z_score_threshold):
     bin_start = 0
     bin_end = bin_increment_samples
     binned = np.zeros(len(z_scored_cell))
