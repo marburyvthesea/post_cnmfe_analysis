@@ -4,7 +4,7 @@ import math
 from tqdm import tqdm
 #import statsmodels.formula.api as smf
 
-def get_movement_offset_point(movement_onset_points, threshold, session_data):
+def get_movement_offset_points(movement_onset_points, activity_threshold, session_data):
 	rest_crossing_thresholds = []
 	for movement_onset_point in movement_onset_points:
 		i = movement_onset_point
