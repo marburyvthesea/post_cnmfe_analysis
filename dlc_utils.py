@@ -16,10 +16,9 @@ def get_resting_period_boundaries(trace_mask):
 			rest_onset.append(sample)
 			sample += 1
 			while sample < len(trace_mask) and trace_mask[sample]==True:
-				sample+1
-				print(sample)
+				sample+=1
+			
 			rest_offset.append(sample) 
-
 
 	resting_boundaries_indicies = list(zip(rest_onset, rest_offset))
 	return(resting_boundaries_indicies)
