@@ -9,13 +9,13 @@ def get_resting_period_boundaries(trace_mask):
 	rest_onset = []
 	rest_offset = []
 	sample = 0
-	while sample<len(trace):
-		if trace[sample]==False:
+	while sample<len(trace_mask):
+		if trace_mask[sample]==False:
 			sample += 1
-		elif trace[sample]==True:
+		elif trace_mask[sample]==True:
 			rest_onset.append(sample)
 			sample += 1
-			while sample < len(trace) and trace[sample]==True:
+			while sample < len(trace_mask) and trace_mask[sample]==True:
 				sample+1
 			rest_offset.append(sample) 
 
