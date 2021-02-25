@@ -25,6 +25,8 @@ def get_resting_period_boundaries(trace, resting_threshold):
 					resting_offset.append(sample)
 					sample+=1
 					break
+		else:
+			sample+=1
 
 	resting_boundaries_indicies = list(zip(resting_onset, resting_offset))
 	return(resting_boundaries_indicies)
