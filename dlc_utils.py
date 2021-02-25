@@ -8,23 +8,24 @@ def get_resting_period_boundaries(trace, resting_threshold):
 	"""input a numpy array for trace"""
 	resting_onset = []
 	resting_offset = []
+	sample = 0
 	while sample<len(trace):
 		if trace[sample]>resting_threshold:
 			sample+=1
 		elif trace[sample]<resting_threshold:
 			resting_onset.append(sample)
 			comp = lambda x: x<resting_threshold
-			while sample<len(trace) and comp(trace):
+			while sample<len(trace) and comp(trace[sample]):
 				sample+=1
 				if sample>=len(trace):
 					break
-				elif comp(trace)==False:
+				elif comp(trace[sample])==False:
 					resting_offset.append(sample)
 					sample+=1
 					break
 	else:
 		sample+=1
-	resting_boundaries_indicies = list(zip(resting_onset), resting_offset)
+	resting_boundaries_indicies = list(zip(resting_onset, resting_offset))
 	return(resting_boundaries_indicies)
 
 def get_movement_offset_points(movement_onset_points, activity_threshold, session_data):
