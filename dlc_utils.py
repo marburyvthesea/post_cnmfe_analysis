@@ -16,16 +16,13 @@ def get_resting_period_boundaries(trace, resting_threshold):
 			sample+=1
 		elif trace[sample]<=resting_threshold:
 			resting_onset.append(sample)
-			comp = lambda x: x<resting_threshold
+			comp = lambda x: x<=resting_threshold
 			while sample<len(trace) and comp(trace[sample]):
-				sample+=1
-				if sample>=len(trace):
-					break
-				elif comp(trace[sample])==False:
+				if comp(trace[sample])==False:
 					resting_offset.append(sample)
 					sample+=1
-		else:
-			sample+=1
+				else:
+					sample+=1
 
 	resting_boundaries_indicies = list(zip(resting_onset, resting_offset))
 	return(resting_boundaries_indicies)
