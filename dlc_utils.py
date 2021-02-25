@@ -4,6 +4,24 @@ import math
 from tqdm import tqdm
 #import statsmodels.formula.api as smf
 
+def get_nearest_Cdf_td_tuples(bounds_tuple, index):
+    movement_boundary_Cdf = (dlc_utils.nearest(index, bounds_tuple[0]), dlc_utils.nearest(index, bounds_tuple[1]))
+    return(movement_boundary_Cdf)
+
+def pull_out_fluorescence_from_velocity_parallel(velocity_trace_boundaries, velocity_trace, fluorescence_trace):
+    """velocity trace and fluorescence trace are indexed by timedeltas
+        e.g velocity_trace=grouped_raw_data[session]['velocity_data']
+        fluorescence_trace=C_norm_df[session]
+    """
+    #convert indicies to timedelta and exclude those outside period of fluorescence recording
+    movement_boundaries_time_delta = [(velocity_trace.iloc[movement_bounds[0]].name, velocity_trace.iloc[movement_bounds[1]].name) for movement_bounds in velocity_trace_boundaries if velocity_trace.iloc[movement_bounds[0]].name<C_norm_df[session].iloc[-1].name]
+    #parallel this 
+    p=Pool(7)
+    movement_boundaries_Cdf = p.map(functools.partial(get_nearest_Cdf_td_tuples, fluorescence_trace.index), movement_boundaries_time_delta)
+    p.close 
+    fluorescence_during_movement = pd.concat([fluorescence_trace.loc[movement_bound_Cdf[0]:movement_bound_Cdf[1]] for movement_bound_Cdf in movement_boundaries_Cdf], axis=1, keys=movement_boundaries_Cdf)
+    return(fluorescence_during_movement)
+
 def get_resting_period_boundaries(trace_mask):
 	"""input a numpy array of true/false values"""
 	rest_onset = []
