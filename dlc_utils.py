@@ -4,27 +4,22 @@ import math
 from tqdm import tqdm
 #import statsmodels.formula.api as smf
 
-def get_resting_period_boundaries(trace, resting_threshold):
-	"""input a numpy array for trace"""
-	resting_onset = []
-	resting_offset = []
+def get_resting_period_boundaries(trace_mask):
+	"""input a numpy array of true/false values"""
+	rest_onset = []
+	rest_offset = []
 	sample = 0
 	while sample<len(trace):
-		if sample%1000==0:
-			print(sample)
-		if trace[sample]>resting_threshold:
-			sample+=1
-		elif trace[sample]<=resting_threshold:
-			resting_onset.append(sample)
-			comp = lambda x: x<=resting_threshold
-			while sample<len(trace) and comp(trace[sample]):
-				if comp(trace[sample])==False:
-					resting_offset.append(sample)
-					sample+=1
-				else:
-					sample+=1
+		if trace[sample]==False:
+			sample += 1
+		elif trace[sample]==True:
+			rest_onset.append(sample)
+			sample += 1
+			while sample < len(trace) and trace[sample]==True:
+				sample+1
+			rest_offset.append(sample) 
 
-	resting_boundaries_indicies = list(zip(resting_onset, resting_offset))
+	resting_boundaries_indicies = list(zip(rest_onset, rest_offset))
 	return(resting_boundaries_indicies)
 
 def get_movement_offset_points(movement_onset_points, activity_threshold, session_data):
