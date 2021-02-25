@@ -10,6 +10,8 @@ def get_resting_period_boundaries(trace, resting_threshold):
 	resting_offset = []
 	sample = 0
 	while sample<len(trace):
+		if sample%1000==0:
+			print(sample)
 		if trace[sample]>resting_threshold:
 			sample+=1
 		elif trace[sample]<resting_threshold:
