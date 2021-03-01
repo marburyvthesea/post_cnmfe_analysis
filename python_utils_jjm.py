@@ -38,13 +38,13 @@ def calculate_event_probability(baseline_regions, to_compare, z_score_event_thre
 
 def z_score_movement_by_rest(session_binned):
   """session binned shoud contain 'resting_fluorescence' and 'movement_fluorescence' data frames"""
-  resting_fluorescence_mean = session_binnded['resting_fluorescence'].mean()
-  resting_fluorescence_std = session_binnded['resting_fluorescence'].std()
+  resting_fluorescence_mean = session_binned['resting_fluorescence'].mean()
+  resting_fluorescence_std = session_binned['resting_fluorescence'].std()
   #indicies of movment onset and offset
-  movement_onsets = list(session_binnded['movement_fluorescence'].index.levels[0])
-  movement_offsets = list(session_binnded['movement_fluorescence'].index.levels[1])
-  rest_onsets = list(session_binnded['resting_fluorescence'].index.levels[0])
-  rest_offsets = list(session_binnded['resting_fluorescence'].index.levels[1])
+  movement_onsets = list(session_binned['movement_fluorescence'].index.levels[0])
+  movement_offsets = list(session_binned['movement_fluorescence'].index.levels[1])
+  rest_onsets = list(session_binned['resting_fluorescence'].index.levels[0])
+  rest_offsets = list(session_binned['resting_fluorescence'].index.levels[1])
   #use the resting mean and standard deviation values to z score 
   #z score movement regions
   z_scored_movement_regions = pd.concat([(session_binnded['movement_fluorescence'].loc[movement_onset].loc[movement_offset]-resting_fluorescence_mean)/resting_fluorescence_std
