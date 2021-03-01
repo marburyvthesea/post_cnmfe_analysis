@@ -47,13 +47,13 @@ def return_movement_and_rest_for_session(moving_periods_by_session, resting_boun
   #filter out short "resting" periods
   resting_boundaries_long = [(boundary[0], boundary[1]) for boundary in resting_boundaries_by_session[session] if (boundary[1]-boundary[0]>resting_period_threshold)]
   if len(movement_boundaries)>0:
-    movement_fluorescence = utils_jjm.pull_out_fluorescence_from_velocity_bounds(movement_boundaries, grouped_raw_data[session]['velocity_data'], C_norm_df[session])
-    pre_movement_fluorescence = utils_jjm.pull_out_fluorescence_from_velocity_bounds(pre_movement_boundaries, grouped_raw_data[session]['velocity_data'], C_norm_df[session])
+    movement_fluorescence = pull_out_fluorescence_from_velocity_bounds(movement_boundaries, grouped_raw_data[session]['velocity_data'], C_norm_df[session])
+    pre_movement_fluorescence = pull_out_fluorescence_from_velocity_bounds(pre_movement_boundaries, grouped_raw_data[session]['velocity_data'], C_norm_df[session])
   else:
     movement_fluorescence = []
     pre_movement_fluorescence = []
   if len(resting_boundaries_long)>0:
-        resting_fluorescence = utils_jjm.pull_out_fluorescence_from_velocity_bounds(resting_boundaries_long[:-1], grouped_raw_data[session]['velocity_data'], C_norm_df[session])
+        resting_fluorescence = pull_out_fluorescence_from_velocity_bounds(resting_boundaries_long[:-1], grouped_raw_data[session]['velocity_data'], C_norm_df[session])
   else:
         resting_fluorescence = []
   return({'movement_fluorescence':movement_fluorescence, 'pre_movement_fluorescence':pre_movement_fluorescence, 'resting_fluorescence':resting_fluorescence})
