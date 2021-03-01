@@ -47,10 +47,10 @@ def z_score_movement_by_rest(session_binned):
   rest_offsets = list(session_binned['resting_fluorescence'].index.levels[1])
   #use the resting mean and standard deviation values to z score 
   #z score movement regions
-  z_scored_movement_regions = pd.concat([(session_binnded['movement_fluorescence'].loc[movement_onset].loc[movement_offset]-resting_fluorescence_mean)/resting_fluorescence_std
+  z_scored_movement_regions = pd.concat([(session_binned['movement_fluorescence'].loc[movement_onset].loc[movement_offset]-resting_fluorescence_mean)/resting_fluorescence_std
                                        for movement_onset, movement_offset in zip(movement_onsets, movement_offsets)], keys=list(zip(movement_onsets, movement_offsets)))
   #z score rest regions
-  z_scored_rest_regions = pd.concat([(session_binnded['resting_fluorescence'].loc[rest_onset].loc[rest_offset]-resting_fluorescence_mean)/resting_fluorescence_std
+  z_scored_rest_regions = pd.concat([(session_binned['resting_fluorescence'].loc[rest_onset].loc[rest_offset]-resting_fluorescence_mean)/resting_fluorescence_std
                                        for rest_onset, rest_offset in zip(rest_onsets, rest_offsets)], keys=list(zip(rest_onsets, rest_offsets)))
   return({'z_scored_movement_regions':z_scored_movement_regions , 'z_scored_rest_regions': z_scored_rest_regions})
 
