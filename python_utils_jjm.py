@@ -26,6 +26,33 @@ import statsmodels.formula.api as smf
 import math
 import dlc_utils
 
+def calculate_event_probability(baseline_regions, to_compare, z_score_event_threshold):
+  #event probability by cell, comparison regions
+  cell_event_probability_comparison = pd.DataFrame({cell:np.count_nonzero(to_compare[cell].values>z_score_event_threshold)/len(to_compare) 
+                                                for cell in list(to_compare.columns)}, index=['event probability'])
+  #event probability by cell, baseline regions 
+  cell_event_probability_baseline = pd.DataFrame({cell:np.count_nonzero(baseline_regions[cell].values>z_score_event_threshold)/len(baseline_regions) 
+                                            for cell in list(baseline_regions.columns)}, index=['event probability'])
+  return(cell_event_probability_comparison, cell_event_probability_baseline)
+
+
+def z_score_movement_by_rest(session_binned):
+  """session binned shoud contain 'resting_fluorescence' and 'movement_fluorescence' data frames"""
+  resting_fluorescence_mean = session_binnded['resting_fluorescence'].mean()
+  resting_fluorescence_std = session_binnded['resting_fluorescence'].std()
+  #indicies of movment onset and offset
+  movement_onsets = list(session_binnded['movement_fluorescence'].index.levels[0])
+  movement_offsets = list(session_binnded['movement_fluorescence'].index.levels[1])
+  rest_onsets = list(session_binnded['resting_fluorescence'].index.levels[0])
+  rest_offsets = list(session_binnded['resting_fluorescence'].index.levels[1])
+  #use the resting mean and standard deviation values to z score 
+  #z score movement regions
+  z_scored_movement_regions = pd.concat([(session_binnded['movement_fluorescence'].loc[movement_onset].loc[movement_offset]-resting_fluorescence_mean)/resting_fluorescence_std
+                                       for movement_onset, movement_offset in zip(movement_onsets, movement_offsets)], keys=list(zip(movement_onsets, movement_offsets)))
+  #z score rest regions
+  z_scored_rest_regions = pd.concat([(session_binnded['resting_fluorescence'].loc[rest_onset].loc[rest_offset]-resting_fluorescence_mean)/resting_fluorescence_std
+                                       for rest_onset, rest_offset in zip(rest_onsets, rest_offsets)], keys=list(zip(rest_onsets, rest_offsets)))
+  return({'z_scored_movement_regions':z_scored_movement_regions , 'z_scored_rest_regions': z_scored_rest_regions})
 
 def pull_out_fluorescence_from_velocity_bounds(velocity_trace_boundaries, velocity_trace, fluorescence_trace):
   """velocity trace and fluorescence trace are indexed by timedeltas
