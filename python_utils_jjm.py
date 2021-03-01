@@ -33,9 +33,8 @@ def pull_out_fluorescence_from_velocity_bounds(velocity_trace_boundaries, veloci
         fluorescence_trace=C_norm_df[session]
   """ 
     #convert indicies to timedelta and exclude those outside period of fluorescence recording
-    movement_boundaries_time_delta = [(velocity_trace.iloc[movement_bounds[0]].name, 
-      velocity_trace.iloc[movement_bounds[1]].name) for movement_bounds in velocity_trace_boundaries if velocity_trace.iloc[movement_bounds[0]].name<fluorescence_trace.iloc[-1].name]
-      #parallelizing this could improve speed
+    movement_boundaries_time_delta = [(velocity_trace.iloc[movement_bounds[0]].name, velocity_trace.iloc[movement_bounds[1]].name) for movement_bounds in velocity_trace_boundaries if velocity_trace.iloc[movement_bounds[0]].name<fluorescence_trace.iloc[-1].name]
+    #parallelizing this could improve speed
     movement_boundaries_Cdf = [(dlc_utils.nearest(fluorescence_trace.index, movement_bound[0]), dlc_utils.nearest(fluorescence_trace.index, movement_bound[1])) for movement_bound in tqdm(movement_boundaries_time_delta)]
     #return concactenated fluorescence from these periods
     fluorescence_during_periods = pd.concat([fluorescence_trace.loc[movement_bound_Cdf[0]:movement_bound_Cdf[1]].reset_index(drop=True) for movement_bound_Cdf in movement_boundaries_Cdf], axis=0, keys=movement_boundaries_Cdf)
