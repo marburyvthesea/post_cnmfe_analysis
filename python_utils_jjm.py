@@ -8,6 +8,7 @@ Please see that file for more details.
 Created on Nov 1 2017
 
 @author: tamachado@stanford.edu
+@author: john-marshall@northwestern.edu
 """
 
 from past.utils import old_div
@@ -24,7 +25,21 @@ import itertools
 import statsmodels.formula.api as smf
 import math
 import dlc_utils
- 
+
+
+def pull_out_fluorescence_from_velocity_bounds(velocity_trace_boundaries, velocity_trace, fluorescence_trace):
+  """velocity trace and fluorescence trace are indexed by timedeltas
+        e.g velocity_trace=grouped_raw_data[session]['velocity_data']
+        fluorescence_trace=C_norm_df[session]
+  """ 
+    #convert indicies to timedelta and exclude those outside period of fluorescence recording
+    movement_boundaries_time_delta = [(velocity_trace.iloc[movement_bounds[0]].name, velocity_trace.iloc[movement_bounds[1]].name) for movement_bounds in velocity_trace_boundaries if velocity_trace.iloc[movement_bounds[0]].name<fluorescence_trace.iloc[-1].name]
+    #parallelizing this could improve speed
+    movement_boundaries_Cdf = [(dlc_utils.nearest(fluorescence_trace.index, movement_bound[0]), dlc_utils.nearest(fluorescence_trace.index, movement_bound[1])) for movement_bound in tqdm(movement_boundaries_time_delta)]
+    #return concactenated fluorescence from these periods 
+    fluorescence_during_periods = pd.concat([fluorescence_trace.loc[movement_bound_Cdf[0]:movement_bound_Cdf[1]].reset_index(drop=True) for movement_bound_Cdf in movement_boundaries_Cdf], axis=0, keys=movement_boundaries_Cdf)
+    return(fluorescence_during_periods)
+
 
 def z_score_CNMFE(CNMFE_results):
     C_Z_scored = []
