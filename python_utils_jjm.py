@@ -26,6 +26,12 @@ import statsmodels.formula.api as smf
 import math
 import dlc_utils
 
+def return_list_of_level_indicies_in_session(event_regions_in_session_df, event_level_idx):
+    """eg event_level_idx=0, start idx, 1 stop idx """
+    indicies = list(set([event_regions_in_session_df.index[idx][event_level_idx] for idx in range(len(event_regions_in_session_df.index))]))
+    indicies.sort()
+    return(indicies)
+
 def calculate_event_probability(baseline_regions, to_compare, z_score_event_threshold):
   #event probability by cell, comparison regions
   cell_event_probability_comparison = pd.DataFrame({cell:np.count_nonzero(to_compare[cell].values>z_score_event_threshold)/len(to_compare) 
@@ -41,10 +47,10 @@ def z_score_movement_by_rest(session_binned):
   resting_fluorescence_mean = session_binned['resting_fluorescence'].mean()
   resting_fluorescence_std = session_binned['resting_fluorescence'].std()
   #indicies of movment onset and offset
-  movement_onsets = list(session_binned['movement_fluorescence'].index.levels[0])
-  movement_offsets = list(session_binned['movement_fluorescence'].index.levels[1])
-  rest_onsets = list(session_binned['resting_fluorescence'].index.levels[0])
-  rest_offsets = list(session_binned['resting_fluorescence'].index.levels[1])
+  movement_onsets = return_list_of_level_indicies_in_session(session_binned['movement_fluorescence'], 0)
+  movement_offsets = return_list_of_level_indicies_in_session(session_binned['movement_fluorescence'], 1)
+  rest_onsets = return_list_of_level_indicies_in_session(session_binned['resting_fluorescence'], 0)
+  rest_offsets = return_list_of_level_indicies_in_session(session_binned['resting_fluorescence'], 1)
   #use the resting mean and standard deviation values to z score 
   #z score movement regions
   z_scored_movement_regions = pd.concat([(session_binned['movement_fluorescence'].loc[movement_onset].loc[movement_offset]-resting_fluorescence_mean)/resting_fluorescence_std

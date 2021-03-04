@@ -15,11 +15,14 @@ port=8886
 
 ssh -L 8887:localhost:8887 jma819@quest.northwestern.edu ssh -N -L 8887:localhost:8887 qnode0019
 
-<<<<<<< HEAD
 ssh -L $port:localhost:$port jma819@quest.northwestern.edu ssh -N -L $port:localhost:$port qnode0001
-=======
-ssh -L $port:localhost:$port jma819@quest.northwestern.edu ssh -N -L $port:localhost:$port qnode5020
-
 
 scp behavCam$behavCamDLC_resnet50_Open_Field_v2Jan27shuffle1_150000_labeled.mp4 jma819@quest.northwestern.edu:/projects/b1118/behaviorvideos/GRIN012_H17_M46_S35/
->>>>>>> beb5e33b86a4c16a0df95aecc350167ebde6e0e6
+
+globus commands 
+
+glbous endpoint search --filter-scope recently-used
+
+res_files=8f796c9e-f5c8-11e5-9842-22000b9da45e
+quest=d5990400-6d04-11e5-ba46-22000b92c6ec
+
