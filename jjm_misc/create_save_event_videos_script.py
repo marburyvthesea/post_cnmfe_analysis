@@ -1,9 +1,9 @@
-
 import pandas as pd 
 import numpy as np
 import h5py
 import sys
 sys.path.append('/home/jma819/post_cmfe_analysis')
+sys.path.append('/Users/johnmarshall/Documents/Analysis/PythonAnalysisScripts/post_cmfe_analysis/jjm_misc')
 import python_utils_jjm as utils_jjm
 import dlc_utils
 import matplotlib.pyplot as plt
@@ -12,160 +12,34 @@ import av
 from tqdm import tqdm
 import multiprocessing as mp
 from itertools import product
+import create_analysis_videos_module as cvm 
+
 
 #input session (and list of events/cells?) as command line arguments 
-session = 'GRIN035_H14_M40_S34'
+#session = 'GRIN035_H14_M40_S34'
+session = sys.argv[1]
 print(session)
-
-
-
 #need to get keys first from all session dataframes to read into pandas 
 h5file=pd.HDFStore('/projects/b1118/miniscope/analysis/event_analysis/movement_regions_for_display.h5')
 keys=h5file.keys()
 h5file.close()
-
 #load fluorescence in event regions
 z_scored_events_by_session = {key_idx.strip('/'):pd.read_hdf('/projects/b1118/miniscope/analysis/event_analysis/movement_regions_for_display.h5', key=key_idx) for key_idx in keys}
-
-
 #load spatial components 
 spatial_h5file=h5py.File('/projects/b1118/miniscope/analysis/spatial_data/spatial_components_test.h5', 'r')
-spatial_contours_by_session = {session:spatial_h5file[session][:] for session in list(spatial_h5file.keys())}
+spatial_contours = {session:spatial_h5file[session][:] for session in list(spatial_h5file.keys())}
 spatial_h5file.close()
-
-
+#velocity data
 velocity_data = pd.read_hdf('/projects/b1118/miniscope/analysis/event_analysis/compiled_velocity_all_sessions.h5')
-
-session = 'GRIN035_H14_M40_S34'
-print(session)
-
-
 #times from msCam trace 
 event_start_indicies_in_session = utils_jjm.return_list_of_level_indicies_in_session(z_scored_events_by_session[session].loc['z_scored_movement_regions'], 0)
 event_end_indicies_in_session = utils_jjm.return_list_of_level_indicies_in_session(z_scored_events_by_session[session].loc['z_scored_movement_regions'], 1)
 
+event_bounds = [event_bound for event_bound in zip(event_start_indicies_in_session, event_end_indicies_in_session)]
 
-# use create_compiled_event_videos_for_session to loop over events in z scored directory 
+#cells_to_plot = list(z_scored_events_by_session[session].loc['z_scored_movement_regions'].columns)
 
-
-## move these to separate file and import module? 
-def create_compiled_event_videos_for_session(z_scored_events_by_session, velocity_data, spatial_contours, session, events_to_plot, cells_to_plot):    
-    """--create flags for selecting all cells/events or subset
-        events_to_plot is tuple (event_start, event_end)
-    """
-    #loop over events here, loop over cells in function
-    for event_bound in tqdm(events_to_plot):
-        behav_cam_clip, cells_recombined, single_cell_response = create_event_video(event_start, event_end, velocity_data.loc[session], 
-                                                                                    z_scored_events_by_session[session], spatial_contours_by_session[session][:, :], session, cell)
-    
-    return(True)
-
-def create_event_video(event_start, event_end, velocity_data_for_session, session_to_load, spatial_contours_by_session, session_name, cells):
-    #create time delta for msCam trace 
-    time_delta_for_msCam_resampled = list(pd.timedelta_range(start=event_start, end=event_end, freq='.2S'))
-    #find the closest frames to these in the behacCam data
-    times_in_velocity_trace = [dlc_utils.nearest(velocity_data_for_session.index, time_delta_msCam) for time_delta_msCam in time_delta_for_msCam_resampled]
-    #get the behav cam frame indicies for the times in times in velocity trace 
-    behav_cam_indicies = [int(velocity_data_for_session.loc[td]['behavCam_frames']%1000) for td in times_in_velocity_trace]
-    #get num of behavCam video
-    behavCam_video = int((velocity_data_for_session.loc[times_in_velocity_trace[0]]['behavCam_frames'])/1000)+1
-    behavCam_video_2 = int((velocity_data_for_session.loc[times_in_velocity_trace[-1]]['behavCam_frames'])/1000)+1
-    #call function to get behavCam clip
-    behav_cam_clip = load_and_return_behavCam_video(behav_cam_indicies, behavCam_video, session_name)
-    
-    all_cell_contours = spatial_contours_by_session[session_name][:, :]
-    event_trace = session_to_load.loc['z_scored_movement_regions'].loc[event_start].loc[event_end]
-    
-    #get event movie for all cells
-    cells_recombined = generate_event_movie_for_all_cells(event_trace, all_cell_contours)
-    #get event movie for single cells
-    ## now just run generate_event_movie_for_all_cells but with single cell 
-    # for cell in columns from z scored movement dataframe 
-    
-    for cell in cells:
-        single_cell_response = generate_cell_trace(cell, all_cell_contours, event_trace, (0, len(event_trace)))    
-        anim_movie = generate_animation_function(behav_cam_clip, {behavCam_video:behav_cam_indicies}, cells_recombined, single_cell_response, cell_trace, cell_trace, session_name, event_start, cell)
-    return(anim_movie, behav_cam_clip, cells_recombined, single_cell_response)
-    
-
-def load_and_return_behavCam_video(behavCam_indicies_in_video, behavCam_video_to_load, session_to_load): 
-    video = av.open('/projects/b1118/behaviorvideos/'+session_to_load+'/behavCam'+str(behavCam_video_to_load).zfill(2)+'DLC_resnet50_Open_Field_v2Jan27shuffle1_150000_labeled.mp4')
-    total_frames = video.streams.video[0].frames
-    movie_images = {}
-    for i, frame in enumerate(video.decode(video=0)):
-        img = frame.to_image()  # PIL image
-        movie_images[i] = img
-        if i%1000==0:
-            print("Frame: %d/%d ..." % (i, total_frames))
-    video.close()
-    movie_shape = np.shape(movie_images[1])
-    frame_subset = [movie_images[i] for i in behavCam_indicies_in_video]
-    return(frame_subset)
-
-def generate_event_movie_for_all_cells(event_trace, all_cell_contours, d1 = 752, d2 = 480):
-    frame_range = (0, len(event_trace))
-    cells_reshaped = np.empty((np.shape(all_cell_contours)[1], frame_range[1], d2, d1))
-    for cell in tqdm(list(event_trace.columns)):
-        # "spatial components", or "A" as dense matrix, cells are 1 indexed, spatial array is 0 indexed  
-        A_reshaped = np.reshape(all_cell_contours[:, cell-1], (d2, d1))
-        #cell_frames = []
-        #for frame in range(frame_range[0], frame_range[1]):
-        #cell_frames.append(np.array([np.dot(A_reshaped, item) for item in [255, 128, 0, z_scored_regions_by_session[session][sample][cell][frame]]]))
-        cells_reshaped[cell-1] = np.array([np.dot(A_reshaped, event_trace[cell][frame]) for frame in range(frame_range[0], frame_range[1])])
-    cells_recombined = np.sum(cells_reshaped, axis=0)
-    return(cells_recombined)
-
-
-def generate_cell_trace(cell_idx, all_cell_contours, event_trace, frame_range, d1 = 752, d2 = 480):
-    A_reshaped = np.reshape(all_cell_contours[:, cell_idx-1], (d2, d1))
-    #cells_reshaped[cell-1] = np.array([np.dot(A_reshaped, event_trace[cell][frame]) for frame in range(frame_range[0], frame_range[1])])
-    cell_reshaped = np.array([np.dot(A_reshaped, event_trace[cell_idx][frame]) for frame in range(frame_range[0], frame_range[1])]) 
-    return(cell_reshaped)
-
-def wrap_for_map(list_input):
-    
-    A_reshaped = np.reshape(list_input[1][:, list_input[0]-1], (list_input[3], list_input[4]))
-    cell_reshaped = np.array([np.dot(A_reshaped, list_input[2][list_input[0]][frame]) for frame in range(list_input[5][0], list_input[5][1])]) 
-    return(cell_reshaped)
-
-
-def generate_animation_function(behav_cam_clip, behavcaminfo, cells_recombined, single_cell_response, cell_trace, session, event_idx, cell):
-    """pass behavCam info as dictionary {'behavcamname':[frames]}"""
-    #set up figure
-    fig, ((ax1, ax2),(ax3,ax4)) = plt.subplots(2,2)
-    plt.subplots_adjust(wspace=0.3)
-    #plot initial frames
-    im = ax1.imshow(cells_recombined[0,:,:], cmap='gray', vmin=0, vmax=255)
-    im2 = ax2.imshow(single_cell_response[0,:,:], cmap='gray', vmin=0, vmax=255)
-    ax3.plot(cell_trace)
-    im4 = ax4.imshow(behav_cam_clip[0])
-    #animation functions 
-    def init():
-        fig.suptitle("frame:"+str(0))
-        im.set_data(cells_recombined[0,:,:])
-        im2.set_data(single_cell_response[0,:,:])
-        ax4.set_title("behavCam: "+str(list(behavcaminfo.values()[0]))+"  frame: "+str(list(behavcaminfo.values()[0])[0]))
-        im4.set_data(behav_cam_clip[0])
-    
-    def animate(i):
-        fig.suptitle("frame:"+str(i))
-        im.set_data(cells_recombined[i,:,:])
-        im2.set_data(single_cell_response[i,:,:])
-        ax4.set_title("behavCam: "+str(list(behavcaminfo.values()[0]))+"  frame: "+str(list(behavcaminfo.values()[0])[i]))
-        im4.set_data(behav_cam_clip[i])
-        return (im, im2, im4)
-    
-    anim = animation.FuncAnimation(fig, animate, init_func=init, frames=cells_recombined.shape[0], interval=50)
-    rc('animation', html='jshtml')
-    mywriter = animation.FFMpegWriter(fps=5)
-    anim.save('/projects/b1118/miniscope/analysis/event_videos/'+session+'_event_'+str(event_idx)+'_cell_'+str(cell)+'.mp4', 
-              writer=mywriter)
-    print('saved: '+' /projects/b1118/miniscope/analysis/event_videos/'+session+'_event_'+str(event_idx)+'_cell_'+str(cell)+'.mp4')
-    return(anim)
-
-
-
-
+cvm.create_compiled_event_videos_for_session(z_scored_events_by_session, velocity_data, spatial_contours, session, event_bounds, [21])
 
 
 

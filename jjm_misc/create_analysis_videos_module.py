@@ -12,19 +12,20 @@ from tqdm import tqdm
 import multiprocessing as mp
 from itertools import product
 
-
-def create_compiled_event_videos_for_session(z_scored_events_by_session, velocity_data, spatial_contours, session, events_to_plot, cells_to_plot):    
+def create_compiled_event_videos_for_session(z_scored_events_by_session, velocity_data, spatial_contours, session, events_to_plot, cells_to_plot, in_vmin=0, in_vmax=255):    
     """--create flags for selecting all cells/events or subset
         events_to_plot is tuple (event_start, event_end)
     """
     #loop over events here, loop over cells in function
     for event_bound in tqdm(events_to_plot):
-        behav_cam_clip, cells_recombined, single_cell_response = create_event_video(event_start, event_end, velocity_data.loc[session], 
-                                                                                    z_scored_events_by_session[session], spatial_contours_by_session[session][:, :], session, cell)
-    
+        video_out, behav_cam_clip, cells_recombined, single_cell_response = create_event_video(event_bound[0], event_bound[1], velocity_data.loc[session], 
+                                                                                    z_scored_events_by_session[session], 
+                                                                                    spatial_contours[session][:, :], 
+                                                                                    session, cells_to_plot, in_vmin, in_vmax)  
     return(True)
 
-def create_event_video(event_start, event_end, velocity_data_for_session, session_to_load, spatial_contours_by_session, session_name, cells):
+
+def create_event_video(event_start, event_end, velocity_data_for_session, session_to_load, spatial_contours_by_session, session_name, cells, in_vmin, in_vmax):
     #create time delta for msCam trace 
     time_delta_for_msCam_resampled = list(pd.timedelta_range(start=event_start, end=event_end, freq='.2S'))
     #find the closest frames to these in the behacCam data
@@ -37,7 +38,7 @@ def create_event_video(event_start, event_end, velocity_data_for_session, sessio
     #call function to get behavCam clip
     behav_cam_clip = load_and_return_behavCam_video(behav_cam_indicies, behavCam_video, session_name)
     
-    all_cell_contours = spatial_contours_by_session[session_name][:, :]
+    all_cell_contours = spatial_contours_by_session[:, :]
     event_trace = session_to_load.loc['z_scored_movement_regions'].loc[event_start].loc[event_end]
     
     #get event movie for all cells
@@ -48,7 +49,8 @@ def create_event_video(event_start, event_end, velocity_data_for_session, sessio
     
     for cell in cells:
         single_cell_response = generate_cell_trace(cell, all_cell_contours, event_trace, (0, len(event_trace)))    
-        anim_movie = generate_animation_function(behav_cam_clip, {behavCam_video:behav_cam_indicies}, cells_recombined, single_cell_response, cell_trace, cell_trace, session_name, event_start, cell)
+        anim_movie = generate_animation_function(behav_cam_clip, {behavCam_video:behav_cam_indicies}, cells_recombined, 
+                                                 single_cell_response, event_trace[cell], session_name, event_start, cell, in_vmin, in_vmax)
     return(anim_movie, behav_cam_clip, cells_recombined, single_cell_response)
     
 
@@ -65,6 +67,7 @@ def load_and_return_behavCam_video(behavCam_indicies_in_video, behavCam_video_to
     movie_shape = np.shape(movie_images[1])
     frame_subset = [movie_images[i] for i in behavCam_indicies_in_video]
     return(frame_subset)
+
 
 def generate_event_movie_for_all_cells(event_trace, all_cell_contours, d1 = 752, d2 = 480):
     frame_range = (0, len(event_trace))
@@ -92,27 +95,26 @@ def wrap_for_map(list_input):
     cell_reshaped = np.array([np.dot(A_reshaped, list_input[2][list_input[0]][frame]) for frame in range(list_input[5][0], list_input[5][1])]) 
     return(cell_reshaped)
 
-
-def generate_animation_function(behav_cam_clip, behavcaminfo, cells_recombined, single_cell_response, cell_trace, session, event_idx, cell):
+def generate_animation_function(behav_cam_clip, behavcaminfo, cells_recombined, single_cell_response, cell_trace, session, event_idx, cell, in_vmin, in_vmax):
     """pass behavCam info as dictionary {'behavcamname':[frames]}"""
     #set up figure
     fig, ((ax1, ax2),(ax3,ax4)) = plt.subplots(2,2)
-    plt.subplots_adjust(wspace=0.3)
+    plt.subplots_adjust(wspace=0.9)
     #plot initial frames
-    im = ax1.imshow(cells_recombined[0,:,:], cmap='gray', vmin=0, vmax=255)
-    im2 = ax2.imshow(single_cell_response[0,:,:], cmap='gray', vmin=0, vmax=255)
+    im = ax1.imshow(cells_recombined[0,:,:], cmap='gray', vmin=in_vmin, vmax=in_vmax)
+    im2 = ax2.imshow(single_cell_response[0,:,:], cmap='gray', vmin=in_vmin, vmax=in_vmax)
     ax3.plot(cell_trace)
     im4 = ax4.imshow(behav_cam_clip[0])
     #animation functions 
     def init():
-        fig.suptitle("frame:"+str(0))
+        fig.suptitle("cell:"+str(cell)+"  frame:"+str(0))
         im.set_data(cells_recombined[0,:,:])
         im2.set_data(single_cell_response[0,:,:])
         ax4.set_title("behavCam: "+str(list(behavcaminfo.keys())[0])+"  frame: "+str(list(behavcaminfo.values())[0][0]))
         im4.set_data(behav_cam_clip[0])
     
     def animate(i):
-        fig.suptitle("frame:"+str(i))
+        fig.suptitle("cell:"+str(cell)+"  frame:"+str(i))
         im.set_data(cells_recombined[i,:,:])
         im2.set_data(single_cell_response[i,:,:])
         ax4.set_title("behavCam: "+str(list(behavcaminfo.keys())[0])+"  frame: "+str(list(behavcaminfo.values())[0][i]))
