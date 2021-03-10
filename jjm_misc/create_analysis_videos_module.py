@@ -101,6 +101,16 @@ def generate_animation_function(behav_cam_clip, behavcaminfo, cells_recombined, 
     fig, ((ax1, ax2),(ax3,ax4)) = plt.subplots(2,2)
     plt.subplots_adjust(wspace=0.9)
     #plot initial frames
+    #options for contrast diplay range
+    if in_vmax=='norm_to_video':
+        in_vmax = np.max(cells_recombined)
+        in2_vmax = in_vmax
+    elif in_vmax=='norm_to_each_video':
+        in_vmax = np.max(cells_recombined)
+        in2_vmax = np.max(single_cell_response)
+    else:
+        in2_vmax=in_vmax
+        
     im = ax1.imshow(cells_recombined[0,:,:], cmap='gray', vmin=in_vmin, vmax=in_vmax)
     im2 = ax2.imshow(single_cell_response[0,:,:], cmap='gray', vmin=in_vmin, vmax=in_vmax)
     ax3.plot(cell_trace)
