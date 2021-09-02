@@ -1,5 +1,5 @@
 
-function[sessionOutput] = jaccard_compute_fn_jjm(dataDir, session, sdThreshold, pixelScale, maxDist, binSize)
+function[sessionOutput] = jaccard_compute_fn_jjm(dataDir, session, regExp, sdThreshold, pixelScale, maxDist, binSize)
 %%add path to data 
 %addpath(genpath('/projects/p30771/miniscope/analysis/OpenFieldAnalysis/spatial_clusters/jones_script_analysis/')); 
 addpath(genpath(dataDir));
@@ -12,7 +12,7 @@ save_path = strcat(dataDir, session, '_');
 %load filtered fluorescence traces from python output
 disp('loading data')
 disp(session)
-cell_eg = readtable(strcat(dataDir, session,'_C_traces_filtered.csv'),'ReadVariableNames', true);
+cell_eg = readtable(strcat(dataDir, session, regExp),'ReadVariableNames', true);
 
 %cell centroids 
 cellXYcoords = readtable(strcat(dataDir,session,'_com_filtered.csv'), 'ReadVariableNames', true);
@@ -31,7 +31,7 @@ cell_traces = cell_traces';
 disp('finding signal peaks')
 
 % get "peaks" in signal, F/F0 above a, here 2.5, SD threshold
-[signalPeaks, ~, ~] = computeSignalPeaks(cell_traces, 'doMovAvg', 0, 'reportMidpoint', 1, 'numStdsForThresh', 2.5);
+[signalPeaks, ~, ~] = computeSignalPeaks(cell_traces, 'doMovAvg', 0, 'reportMidpoint', 1, 'numStdsForThresh', sdThreshold);
 
 %in the PD paper, we pad each 'event' to make is 1-s duration. Note that we
 %no longer do this with our GCaMP7f data, but I would do it with GCaMP6
@@ -92,12 +92,12 @@ p355_jaccard_shuffle(paddedSignalPeaks,frames_to_analyze,within_frames_to_analyz
 %% save these outputs to csv files
 disp('saving output')
 
-csvwrite(strcat(save_path,'CellJaccards','.csv'), CellJaccards);
-csvwrite(strcat(save_path,'ShuffledCellJaccards','.csv'), ShuffledCellJaccards);
-csvwrite(strcat(save_path,'normlBinnedCellJaccards','.csv'), normlBinnedCellJaccards);
-csvwrite(strcat(save_path,'normlShuffledBinnedCellJaccards','.csv'), normlShuffledBinnedCellJaccards);
-csvwrite(strcat(save_path,'proximalPairIndices','.csv'), proximalPairIndices);
-csvwrite(strcat(save_path,'cellDistances_squareform_matrix','.csv'), cellDistances_squareform);
+csvwrite(strcat(save_path,'CellJaccards__', num2str(sdThreshold), '.csv'), CellJaccards);
+csvwrite(strcat(save_path,'ShuffledCellJaccardsi__', num2str(sdThreshold), '.csv'), ShuffledCellJaccards);
+csvwrite(strcat(save_path,'normlBinnedCellJaccards__', num2str(sdThreshold),'.csv'), normlBinnedCellJaccards);
+csvwrite(strcat(save_path,'normlShuffledBinnedCellJaccards__', num2str(sdThreshold),'.csv'), normlShuffledBinnedCellJaccards);
+csvwrite(strcat(save_path,'proximalPairIndices__', num2str(sdThreshold), '.csv'), proximalPairIndices);
+csvwrite(strcat(save_path,'cellDistances_squareform_matrix__', num2str(sdThreshold),'.csv'), cellDistances_squareform);
 
 %% save parameters to structure
 analysisParams = struct('session', session, 'sdThreshold', sdThreshold, 'pixelScaleFactor', pixelScale, 'maxDistanceForBinning', ... 

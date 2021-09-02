@@ -14,17 +14,21 @@
 %KO_sessions = {'GRIN009_H13_M59_S14'; 'GRIN011_H10_M19_S59'; 'GRIN012_H16_M57_S23'; 'GRIN012_H17_M32_S17'; ...
 %			 'GRIN018_H16_M13_S53'; 'GRIN018_H17_M41_S43'} ;
 %input sessions
-
+%create variable for sdThreshold beforehand
 %loop over sessions
 size_array = size(sessions);
+%save array with pixel scales for each indiv session
+%maybe save a tuple with session name and pixel scale values
 
 %structure to store data
 batchData = cell(size_array(1,1), 1);
 
 for session = 1:size_array(1,1);
+	disp('loading');
 	disp(sessions{session, :});
-	% inputs = (dataDir, session, sdThreshold, pixelScale, maxDist, binSize)
-	sessionOutput = jaccard_compute_fn_jjm(dataDirectory, sessions{session, :}, 2.5, 1, 500, 20);
+	% inputs = (dataDir, session, regExp,  sdThreshold, pixelScale, maxDist, binSize)
+	% regExp e.g. = 'movement_regions_C_traces_filtered.csv', 'rest_regions_C_traces_filtered.csv'
+	sessionOutput = jaccard_compute_fn_jjm(dataDirectory, sessions{session, :}, regExp, sdThreshold, 1, 500, 20);
 	batchData{session, 1} = sessionOutput ;
 end
 

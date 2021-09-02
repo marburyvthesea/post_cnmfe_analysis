@@ -4,6 +4,58 @@ import math
 from tqdm import tqdm
 #import statsmodels.formula.api as smf
 
+def get_nearest_Cdf_td_tuples(bounds_tuple, index):
+    movement_boundary_Cdf = (dlc_utils.nearest(index, bounds_tuple[0]), dlc_utils.nearest(index, bounds_tuple[1]))
+    return(movement_boundary_Cdf)
+
+def pull_out_fluorescence_from_velocity_parallel(velocity_trace_boundaries, velocity_trace, fluorescence_trace):
+    """velocity trace and fluorescence trace are indexed by timedeltas
+        e.g velocity_trace=grouped_raw_data[session]['velocity_data']
+        fluorescence_trace=C_norm_df[session]
+    """
+    #convert indicies to timedelta and exclude those outside period of fluorescence recording
+    movement_boundaries_time_delta = [(velocity_trace.iloc[movement_bounds[0]].name, velocity_trace.iloc[movement_bounds[1]].name) for movement_bounds in velocity_trace_boundaries if velocity_trace.iloc[movement_bounds[0]].name<C_norm_df[session].iloc[-1].name]
+    #parallel this 
+    p=Pool(7)
+    movement_boundaries_Cdf = p.map(functools.partial(get_nearest_Cdf_td_tuples, fluorescence_trace.index), movement_boundaries_time_delta)
+    p.close 
+    fluorescence_during_movement = pd.concat([fluorescence_trace.loc[movement_bound_Cdf[0]:movement_bound_Cdf[1]] for movement_bound_Cdf in movement_boundaries_Cdf], axis=1, keys=movement_boundaries_Cdf)
+    return(fluorescence_during_movement)
+
+def get_resting_period_boundaries(trace_mask):
+	"""input a numpy array of true/false values"""
+	rest_onset = []
+	rest_offset = []
+	sample = 0
+	while sample<len(trace_mask):
+		if trace_mask[sample]==False:
+			sample += 1
+		elif trace_mask[sample]==True:
+			rest_onset.append(sample)
+			sample += 1
+			while sample < len(trace_mask) and trace_mask[sample]==True:
+				sample+=1
+			
+			rest_offset.append(sample) 
+
+	resting_boundaries_indicies = list(zip(rest_onset, rest_offset))
+	return(resting_boundaries_indicies)
+
+def get_movement_offset_points(movement_onset_points, activity_threshold, session_data):
+	rest_crossing_thresholds = []
+	for movement_onset_point in movement_onset_points:
+		i = movement_onset_point
+		comp = lambda x : x>activity_threshold
+		while i <= len(session_data) and comp(session_data.iloc[i])==True:
+			i+=1
+			if i>=len(session_data):
+				rest_crossing_thresholds.append(i-1)
+				break
+			elif comp(session_data.iloc[i])==False:
+				rest_crossing_thresholds.append(i)
+				break
+	return(rest_crossing_thresholds)
+	
 def nearest(items, to_compare):
     return min(items, key=lambda x: abs(x-to_compare))
 
@@ -30,7 +82,6 @@ def get_matched_threshold_crossings(input_array, threshold):
 				i+=1
 	indicies_to_cut = list(zip(crossing_points, negative_crossings))
 	return(indicies_to_cut)
-
 
 def calculate_centroid(dlc_output_df):
 	#df column names
@@ -124,11 +175,50 @@ def downsample_dlc_to_behavior(dlc_tracking_path, timestamps_file, msCam_camnum=
 
 	return(aligned_out)
 
+def downsample_mmtracking(mm_tracking_nondownsampled, timestamps_file, msCam_camnum=0, behavCam_camnum=1):
+	"""
+	use the timestamps file to get the closest behavior cam frame to each miniscope cam frame
+	typically the mcCam is cam "0" and the behavCam is cam "1" but can change 
+	"""
+
+	frame_clock_df = pd.read_table(timestamps_file)
+	# load time stamps 
+	msCam_timestamps = frame_clock_df[frame_clock_df['camNum'] == msCam_camnum].set_index('frameNum')
+	behavCam_timestamps = frame_clock_df[frame_clock_df['camNum'] == behavCam_camnum].set_index('frameNum')
+	# reset initial clock value to 0 
+	msCam_timestamps['sysClock'][1] = 0
+	behavCam_timestamps['sysClock'][1] = 0
+	#find beahviorcam frames closest to mscam frames
+	msCam_timestamps = align_behavior_data(msCam_timestamps, behavCam_timestamps)
+	msCam_timestamps.reset_index(inplace=True)
+	#select only the behaviorcam frames closely matching msCam frames 
+	ms_aligned = mm_tracking_nondownsampled.iloc[[row-1 for row in msCam_timestamps['behavCam_frames'].values if row<len(mm_tracking_nondownsampled)],:]
+	ms_aligned.reset_index(inplace=True, drop=True)
+	aligned_out = pd.concat([ms_aligned, msCam_timestamps.reset_index().loc[:len(ms_aligned)-1]], axis=1)
+
+	return(aligned_out)
+
 def downsample_and_interpolate(original_df, original_sf, downsampled_sf, interpolation_method):
 	downsampled = original_df.resample(downsampled_sf).mean()
 	upsampled = downsampled.resample(original_sf)
 	interpolated = upsampled.interpolate(method=interpolation_method)
 	return(interpolated)
+
+def bin_by_activity_threshold_return_column(df_column, resting_time_threshold, active_time_threshold, crossing_threshold, resting_threshold, activity_threshold):
+	moving_bins = np.zeros(len(df_column))
+	# test if each point in df column is above the activity threshold
+	# start at sample point that is equivalent to the length of samples of the resting period
+	for point in range(resting_time_threshold, len(df_column)):
+		if df_column[point] < activity_threshold:
+			moving_bins[point] = 0
+		#test if the mean of values before the threshold is below a certain level, i.e. starts from rest
+		elif df_column[point] > crossing_threshold and (np.mean(df_column.values[point-resting_time_threshold:(point-1)]) < resting_threshold):
+			# test if the velocity remains above a given value for set period
+			if not(any(df_column.values[point+1:point+active_time_threshold] < activity_threshold)):
+				moving_bins[point] = 1
+			else:
+				moving_bins[point] = 0
+	return(moving_bins)
 
 def bin_by_activity_threshold_2(df_column, resting_time_threshold, active_time_threshold, crossing_threshold, resting_threshold, activity_threshold):
 	moving_bins = np.zeros(len(df_column))

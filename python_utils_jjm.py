@@ -8,6 +8,7 @@ Please see that file for more details.
 Created on Nov 1 2017
 
 @author: tamachado@stanford.edu
+@author: john-marshall@northwestern.edu
 """
 
 from past.utils import old_div
@@ -25,6 +26,70 @@ import statsmodels.formula.api as smf
 import math
 import dlc_utils
 
+def return_list_of_level_indicies_in_session(event_regions_in_session_df, event_level_idx):
+    """eg event_level_idx=0, start idx, 1 stop idx """
+    indicies = list(set([event_regions_in_session_df.index[idx][event_level_idx] for idx in range(len(event_regions_in_session_df.index))]))
+    indicies.sort()
+    return(indicies)
+
+def calculate_event_probability(baseline_regions, to_compare, z_score_event_threshold):
+  #event probability by cell, comparison regions
+  cell_event_probability_comparison = pd.DataFrame({cell:np.count_nonzero(to_compare[cell].values>z_score_event_threshold)/len(to_compare) 
+                                                for cell in list(to_compare.columns)}, index=['event probability'])
+  #event probability by cell, baseline regions 
+  cell_event_probability_baseline = pd.DataFrame({cell:np.count_nonzero(baseline_regions[cell].values>z_score_event_threshold)/len(baseline_regions) 
+                                            for cell in list(baseline_regions.columns)}, index=['event probability'])
+  return(cell_event_probability_comparison, cell_event_probability_baseline)
+
+
+def z_score_movement_by_rest(session_binned):
+  """session binned shoud contain 'resting_fluorescence' and 'movement_fluorescence' data frames"""
+  resting_fluorescence_mean = session_binned['resting_fluorescence'].mean()
+  resting_fluorescence_std = session_binned['resting_fluorescence'].std()
+  #indicies of movment onset and offset
+  movement_onsets = return_list_of_level_indicies_in_session(session_binned['movement_fluorescence'], 0)
+  movement_offsets = return_list_of_level_indicies_in_session(session_binned['movement_fluorescence'], 1)
+  rest_onsets = return_list_of_level_indicies_in_session(session_binned['resting_fluorescence'], 0)
+  rest_offsets = return_list_of_level_indicies_in_session(session_binned['resting_fluorescence'], 1)
+  #use the resting mean and standard deviation values to z score 
+  #z score movement regions
+  z_scored_movement_regions = pd.concat([(session_binned['movement_fluorescence'].loc[movement_onset].loc[movement_offset]-resting_fluorescence_mean)/resting_fluorescence_std
+                                       for movement_onset, movement_offset in zip(movement_onsets, movement_offsets)], keys=list(zip(movement_onsets, movement_offsets)))
+  #z score rest regions
+  z_scored_rest_regions = pd.concat([(session_binned['resting_fluorescence'].loc[rest_onset].loc[rest_offset]-resting_fluorescence_mean)/resting_fluorescence_std
+                                       for rest_onset, rest_offset in zip(rest_onsets, rest_offsets)], keys=list(zip(rest_onsets, rest_offsets)))
+  return({'z_scored_movement_regions':z_scored_movement_regions , 'z_scored_rest_regions': z_scored_rest_regions})
+
+def pull_out_fluorescence_from_velocity_bounds(velocity_trace_boundaries, velocity_trace, fluorescence_trace):
+  """velocity trace and fluorescence trace are indexed by timedeltas
+        e.g velocity_trace=grouped_raw_data[session]['velocity_data']
+        fluorescence_trace=C_norm_df[session]
+  """ 
+  #convert indicies to timedelta and exclude those outside period of fluorescence recording
+  movement_boundaries_time_delta = [(velocity_trace.iloc[movement_bounds[0]].name, velocity_trace.iloc[movement_bounds[1]].name) for movement_bounds in velocity_trace_boundaries if velocity_trace.iloc[movement_bounds[0]].name<fluorescence_trace.iloc[-1].name]
+  #parallelizing this could improve speed
+  movement_boundaries_Cdf = [(dlc_utils.nearest(fluorescence_trace.index, movement_bound[0]), dlc_utils.nearest(fluorescence_trace.index, movement_bound[1])) for movement_bound in tqdm(movement_boundaries_time_delta)]
+  #return concactenated fluorescence from these periods
+  fluorescence_during_periods = pd.concat([fluorescence_trace.loc[movement_bound_Cdf[0]:movement_bound_Cdf[1]].reset_index(drop=True) for movement_bound_Cdf in movement_boundaries_Cdf], axis=0, keys=movement_boundaries_Cdf)
+  return(fluorescence_during_periods)
+
+def return_movement_and_rest_for_session(moving_periods_by_session, resting_boundaries_by_session, grouped_raw_data,
+  C_norm_df, resting_period_threshold, session):
+  movement_boundaries = list(moving_periods_by_session[session].columns)
+  pre_movement_boundaries = [(movement_bound[0]-80, movement_bound[0]) for movement_bound in movement_boundaries]
+  #filter out short "resting" periods
+  resting_boundaries_long = [(boundary[0], boundary[1]) for boundary in resting_boundaries_by_session[session] if (boundary[1]-boundary[0]>resting_period_threshold)]
+  if len(movement_boundaries)>0:
+    movement_fluorescence = pull_out_fluorescence_from_velocity_bounds(movement_boundaries, grouped_raw_data[session]['velocity_data'], C_norm_df[session])
+    pre_movement_fluorescence = pull_out_fluorescence_from_velocity_bounds(pre_movement_boundaries, grouped_raw_data[session]['velocity_data'], C_norm_df[session])
+  else:
+    movement_fluorescence = []
+    pre_movement_fluorescence = []
+  if len(resting_boundaries_long)>0:
+        resting_fluorescence = pull_out_fluorescence_from_velocity_bounds(resting_boundaries_long[:-1], grouped_raw_data[session]['velocity_data'], C_norm_df[session])
+  else:
+        resting_fluorescence = []
+  return({'movement_fluorescence':movement_fluorescence, 'pre_movement_fluorescence':pre_movement_fluorescence, 'resting_fluorescence':resting_fluorescence})
 
 def z_score_CNMFE(CNMFE_results):
     C_Z_scored = []
@@ -71,7 +136,7 @@ def get_ISIs_binned_data(signal, framerate, num_cells, event_threshold):
     event_times = []
     event_ISIs = []
     for cell in range(num_cells):
-        event_indicies_by_cell = ma.count_events_in_array(signal[cell].values, framerate, .1, threshold=event_threshold, up=True)[1]
+        event_indicies_by_cell = ma.count_events_in_array(signal[cell], framerate, .1, threshold=event_threshold, up=True)[1]
         event_times_by_cell = ([(1/framerate)*x for x in event_indicies_by_cell])
         event_times.append(event_times_by_cell)
         cell_ISIs = [(event_times_by_cell[event]-event_times_by_cell[event-1]) for event in range(1, len(event_times_by_cell))]
@@ -93,6 +158,22 @@ def binning_function_uncrop(z_scored_cell_column, bin_increment_samples, z_score
         bin_start += bin_increment_samples
         bin_end += bin_increment_samples
     return(np.array(binned))
+
+def binning_function_uncrop_array(z_scored_cell, bin_increment_samples, z_score_threshold):
+    bin_start = 0
+    bin_end = bin_increment_samples
+    binned = np.zeros(len(z_scored_cell))
+    #time_index = []
+    while bin_end < len(z_scored_cell):
+        if np.any(z_scored_cell[bin_start:bin_end]>z_score_threshold):
+            binned[bin_start:bin_end] = np.ones(bin_increment_samples)
+        else:
+            binned[bin_start:bin_end] = np.zeros(bin_increment_samples)
+        #time_index.append(bin_start)
+        bin_start += bin_increment_samples
+        bin_end += bin_increment_samples
+    return(np.array(binned))
+
 
 def binning_function(bin_increment_samples, z_scored_cell, z_score_threshold):
     bin_start = 0
