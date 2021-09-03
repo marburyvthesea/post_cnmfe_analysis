@@ -1,7 +1,8 @@
 function [shiftedEventTrace, CellJaccards, ShuffledCellJaccards, normlBinnedCellJaccards, ...
-    normlShuffledBinnedCellJaccards, proximalPairIndices] = p355_jaccard_shuffle(paddedSignalPeaks, ...
+    normlShuffledBinnedCellJaccards, proximalPairIndices] = p355_jaccard_shuffle(paddedSignalPeaksInput, ...
     thisTreatmentFrames,thisMoveTypeFrames, cellXYcoords, numCells, cellDistances, numBins, binVector, type)
 
+%changed paddedSignalPeaks to paddedSignalPeaksInput -JJM
 
 %INPUTS:
 %1) numFrames
@@ -22,11 +23,13 @@ function [shiftedEventTrace, CellJaccards, ShuffledCellJaccards, normlBinnedCell
 %4) normlBinnedCellJaccards 
 %5) normlShuffledBinnedCellJaccards
 if type == 2 
-    paddedSignalPeaks = cellTraces;
+    %what does this do? -JJM 
+    %paddedSignalPeaks = cellTraces;
+    paddedSignalPeaksInput = paddedSignalPeaksInput; 
 end
 %get also the padded event traces for rest and movement
 
-thisTreatment_PaddedSignalPeaks = paddedSignalPeaks(:, thisTreatmentFrames);
+thisTreatment_PaddedSignalPeaks = paddedSignalPeaksInput(:, thisTreatmentFrames);
 thisMoveType_PaddedSignalPeaks = thisTreatment_PaddedSignalPeaks(:, thisMoveTypeFrames);
 nComparisons = length(cellDistances);%just to keep track of the number of cell-cell comparisons
 
@@ -40,8 +43,6 @@ else if type == 2
      idx = 1:size(CellJaccards, 1)+1:numel(CellJaccards);%finds the diagonal
      CellJaccards(idx) = 0; %sets the diagonal to zero
      CellJaccards = squareform(CellJaccards); %converts square matrix with zeros diagonal to linear (same as pdist)    
-     
-     
      
     end
 end

@@ -100,6 +100,14 @@ csvwrite(strcat(save_path,'normlBinnedCellJaccards','.csv'), normlBinnedCellJacc
 csvwrite(strcat(save_path,'normlShuffledBinnedCellJaccards','.csv'), normlShuffledBinnedCellJaccards);
 csvwrite(strcat(save_path,'proximalPairIndices','.csv'), proximalPairIndices);
 
+%% for computing the spatial coordination index
+
+% calcuate the CellJaccards at each time point, set frames_to_analyze to 1?
+% alternatively, just don't pad signal peaks and compute over padded frame length here?  
+
+% perform a KS test on the normlBinnedCellJaccards and the normlShuffledBinnedCellJaccards 
+
+% log(P) is the spatial coordination index 
 
 
 

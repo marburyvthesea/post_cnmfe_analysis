@@ -1,5 +1,5 @@
 
-function[sessionOutput] = jaccard_compute_fn_jjm(dataDir, session, regExp, sdThreshold, pixelScale, maxDist, binSize)
+function[sessionOutput] = jaccard_compute_fn_jjm(dataDir, session, regExp, sdThreshold, pixelScale, maxDist, binSize, padding, samplesToPad)
 %%add path to data 
 %addpath(genpath('/projects/p30771/miniscope/analysis/OpenFieldAnalysis/spatial_clusters/jones_script_analysis/')); 
 addpath(genpath(dataDir));
@@ -40,8 +40,11 @@ disp('finding signal peaks')
 disp('padding signal peaks')
 
 %should adjust padded signal peaks to work with different input sampling intervals 
-paddedSignalPeaks = getPaddedSignalPeaks(signalPeaks);
-
+if padding == true:
+	paddedSignalPeaks = getPaddedSignalPeaks_jjm(signalPeaks, samplesToPad);
+else:
+	paddedSignalPeaks = signalPeaks; 
+end
 
 %compute the distances between all the pairs of cells
 %note that in our movies, the pixel size is 2.5um. We can take your

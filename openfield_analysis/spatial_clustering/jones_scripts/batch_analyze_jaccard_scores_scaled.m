@@ -27,9 +27,10 @@ batchData = cell(size_array(1,1), 1);
 for session = 1:size_array(1,1);
 	disp('loading');
 	disp(sessions{session, :}{1});
-	% inputs = (dataDir, session, regExp,  sdThreshold, pixelScale, maxDist, binSize)
+	% inputs = (dataDir, session, regExp,  sdThreshold, pixelScale, maxDist, binSize,  option to pad peaks, )
 	% regExp e.g. = 'movement_regions_C_traces_filtered.csv', 'rest_regions_C_traces_filtered.csv'
-	sessionOutput = jaccard_compute_fn_jjm(dataDirectory, sessions{session, :}{1}, regExp, sdThreshold, sessions{session, :}{2}, 500, 20);
+	
+	sessionOutput = jaccard_compute_fn_jjm(dataDirectory, sessions{session, :}{1}, regExp, sdThreshold, sessions{session, :}{2}, 500, 20, true);
 	batchData{session, 1} = sessionOutput ;
 end
 
