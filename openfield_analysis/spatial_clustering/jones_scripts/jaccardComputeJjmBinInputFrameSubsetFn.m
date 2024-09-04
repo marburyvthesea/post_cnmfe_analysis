@@ -1,7 +1,14 @@
 
-function [outputFileArray] = jaccardComputeJjm50umBinsFrameSubsetFn(session, frameFileInput, frameSubsetDir, dir_path)
+function [outputFileArray] = jaccardComputeJjmBinInputFrameSubsetFn(session, frameFileInput, ...
+    frameSubsetDir, dir_path, peakThreshold, micronsPerPixel, maxDist, binSize, bStart, numBins)
 
     %Input: session, frameFileInput
+    % peakThreshold
+    % micronsPerPixel 2.5 = microns (inscopix), 1 (v3), 1.85 (v4)
+    % maxDist, 500 micron from Jones
+    % binSize, 50 micron from Jones
+    % bStart, 20 or 25 micron from Jones 
+
     %add path to data 
     addpath(genpath('F:\JJM\miniscope_analysis\clustering_analysis\')); 
     %addpath(genpath('/Volumes/My_Passport/cnmfe_analysis_files/OpenFieldAnalysis/2020/D1_mGluRKO_clustering/data/'));
@@ -30,7 +37,7 @@ function [outputFileArray] = jaccardComputeJjm50umBinsFrameSubsetFn(session, fra
         framesSubset = readtable(strcat(frameSubsetDir, frameFileInput), 'ReadVariableNames', true); 
         numFramesToAnalyze = size(framesSubset);
         frameSubsetIndicies = table2array(framesSubset(:, 2));
-        
+      
         disp('analyzing subset')
     
     end
@@ -58,7 +65,7 @@ function [outputFileArray] = jaccardComputeJjm50umBinsFrameSubsetFn(session, fra
     disp('finding signal peaks')
 
     % get "peaks" in signal, F/F0 above a, here 2.5, SD threshold
-    [signalPeaks, ~, ~] = computeSignalPeaks(cell_traces, 'doMovAvg', 0, 'reportMidpoint', 1, 'numStdsForThresh', 2.5);
+    [signalPeaks, ~, ~] = computeSignalPeaks(cell_traces, 'doMovAvg', 0, 'reportMidpoint', 1, 'numStdsForThresh', peakThreshold);
 
     %in the PD paper, we pad each 'event' to make is 1-s duration. Note that we
     %no longer do this with our GCaMP7f data, but I would do it with GCaMP6
@@ -80,7 +87,7 @@ function [outputFileArray] = jaccardComputeJjm50umBinsFrameSubsetFn(session, fra
     XY_coords_array = table2array(cellXYcoords(:,2:size_com_table(1,2))); 
     XY_coords_array = XY_coords_array';
 
-    cellDistances = pdist(XY_coords_array, 'euclidean')*1.85;%distances multiplied by 2.5 = microns (inscopix), 1 (v3), 1.85 (v4)
+    cellDistances = pdist(XY_coords_array, 'euclidean')*micronsPerPixel; %distances multiplied by 2.5 = microns (inscopix), 1 (v3), 1.85 (v4)
     %ouput squareform array for comparison in python later 
     cellDistances_squareform = squareform(cellDistances); 
 
@@ -91,35 +98,44 @@ function [outputFileArray] = jaccardComputeJjm50umBinsFrameSubsetFn(session, fra
     %higher at rest and lower at higher running speeds). We can look closer at
     %this later. 
 
+
     % transpose and add 1 to correct for python 0 indexing
     frames_to_analyze = 1:size(cell_traces, 2);
     if strcmp(frameFileInput, 'all_frames')
-        within_frames_to_analyze = frames_to_analyze ;
+        within_frames_to_analyze_trimmed = frames_to_analyze ;
     else
         within_frames_to_analyze = frameSubsetIndicies.'+1;
+        %remove values exceeding cnmfe length 
+        logical_index = within_frames_to_analyze <= height(cell_eg);
+        within_frames_to_analyze_trimmed = within_frames_to_analyze(logical_index);
+
     end
 
     %within_frames_to_analyze = frameSubsetIndicies.'+1;
 
-    if within_frames_to_analyze > 0
+    if within_frames_to_analyze_trimmed > 0
         %now define the cell-cell distance bins you want to average the
         %correlations within. We usually do 20 um bins out to 500um separation. We
         %also ignore the first bin (<20um) because sometimes very nearby cells have
         %high correlations because they are spatially overlapped (although I don't
         %think this is a huge program with CNMFe, because it merges these cells)
 
-        maxDist = 500;%compare out to 500 um
-        binSize = 50;%compare in 50 um bins
-        numBins = maxDist/binSize-1;%throw out the first bin (overlapping cells)
-        binVector = 25:binSize:maxDist;%cells must be atleast 20um apart. 
+        %maxDist = 500;%compare out to 500 um
+        %binSize = 50;%compare in 50 um bins
+        %numBins = maxDist/binSize-1;%throw out the first bin (overlapping cells)
+        binVector = bStart:binSize:maxDist;%cells must be atleast 25um apart, 25:binSize:maxDist  
         numFrames = length(signalPeaks);
         numCells = size(cellXYcoords, 1);
-
+        
         disp('computing jaccard scores')
+        disp('bins:')
+        disp(binVector)
+        disp('num bins')
+        disp(numBins)
 
         [~, CellJaccards, ShuffledCellJaccards, normlBinnedCellJaccards, ...
             normlShuffledBinnedCellJaccards, proximalPairIndices] = ...
-        p355_jaccard_shuffle(paddedSignalPeaks,frames_to_analyze,within_frames_to_analyze, cellXYcoords, numCells, cellDistances, numBins, binVector, 1);
+        p355_jaccard_shuffle(paddedSignalPeaks,frames_to_analyze,within_frames_to_analyze_trimmed, cellXYcoords, numCells, cellDistances, numBins, binVector, 1);
 
         %% save these outputs to csv files
         disp('saving output')
@@ -133,14 +149,24 @@ function [outputFileArray] = jaccardComputeJjm50umBinsFrameSubsetFn(session, fra
         csvwrite(strcat(save_path,'normlShuffledBinnedCellJaccards','.csv'), normlShuffledBinnedCellJaccards);
         csvwrite(strcat(save_path,'proximalPairIndices','.csv'), proximalPairIndices);
 
+        csvwrite(strcat(save_path, 'binVector', '.csv'), binVector);
+
         outputFileArray = {strcat(save_path,'signalPeaks','.csv'); strcat(save_path,'paddedSignalPeaks','.csv'); strcat(save_path,'CellJaccards','.csv'); ...
             strcat(save_path,'ShuffledCellJaccards','.csv') ; strcat(save_path,'normlBinnedCellJaccards','.csv') ; strcat(save_path,'normlShuffledBinnedCellJaccards','.csv'); ...
             strcat(save_path,'proximalPairIndices','.csv')} ;
+    
+        varsTable = table(peakThreshold, micronsPerPixel, maxDist, ...
+        binSize, bStart, numBins, binVector, 'VariableNames', ["peakThreshold", "micronsPerPixel", ...
+        "maxDist", "binSize", "bStart", "numBins", "binVector"]);
+        fOUT = strcat(save_path, 'params.csv');
+        writetable(varsTable, fOUT);
+
 
     else
         disp('no frames in this bin')
         outputFileArray={};
     end
+
 end
 
 %% for computing the spatial coordination index

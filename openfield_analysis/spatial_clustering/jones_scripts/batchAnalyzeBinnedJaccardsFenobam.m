@@ -2,6 +2,8 @@
 CNMFE_path = 'F:\JJM\miniscope_analysis\mGluR5_NAM\clustering_analysis\' ; 
 cd(CNMFE_path)
 
+% 'DIO_r2.20_JNJ_15_28_00',
+
 sessions =  {'Vehicle_DIO_r2.7_15_20_30', 'Vehicle_DIO_r2.7_15_51_07', ...
               'Vehicle_DIO_r2.8_16_45_11', 'Vehicle_DIO_r2.8_17_16_03', ...
               'Vehicle_DIO_r2.14_17_25_26', 'Vehicle_DIO_r2.14_17_40_46', 'Vehicle_DIO_r2.14_18_11_01', ...
@@ -13,10 +15,18 @@ sessions =  {'Vehicle_DIO_r2.7_15_20_30', 'Vehicle_DIO_r2.7_15_51_07', ...
               } ; 
 
 
+inputPeakThreshold = 2.5 ; 
+inputMicronsPerPixel = 1.85 ; % micronsPerPixel 2.5 = microns (inscopix), 1 (v3), 1.85 (v4)
+inputMaxDist = 500 ; 
+inputBinSize = 450 ; 
+inputBStart = 50 ;
+inputNumBins = 1; %9 for 50um Size
+%inputBinVector = inputBStart:inputBinSize:inputMaxDist;
+%%
 regExp= '_velocityBin*' ; 
 
-%framesDir= 'F:\JJM\miniscope_analysis\mGluR5_NAM\clustering_analysis\frames_subset_Fri_24_Feb_2023_13_21_14' ;
-framesDir = 'all_frames';
+framesDir= 'F:\JJM\miniscope_analysis\mGluR5_NAM\clustering_analysis\frames_subset_Wed_08_Nov_2023_13_59_30\' ;
+%framesDir = 'all_frames';
 
 sizeSessions = size(sessions);
 
@@ -27,10 +37,11 @@ sizeSessions = size(sessions);
     else
         dirInput = framesDir ;
     end
-
+%%
 for i=1:sizeSessions(1,2)
     session=sessions{1,i} ;
-    analyzeJaccardsForSessionFn(session, dirInput, regExp, CNMFE_path) ; 
+    analyzeJaccardsForSessionFn(session, dirInput, regExp, CNMFE_path, inputPeakThreshold, inputMicronsPerPixel, ...
+        inputMaxDist, inputBinSize, inputBStart, inputNumBins) ; 
 
 end
 

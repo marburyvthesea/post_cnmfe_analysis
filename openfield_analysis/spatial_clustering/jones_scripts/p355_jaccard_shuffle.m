@@ -92,7 +92,7 @@ ShuffledCellJaccards = nanmean(thisTreatment_ShiftedJaccardMatrix);
 %%proximal and distal jaccard for actual and shuffled data. 
 
 
-proximalPairIndices = find(cellDistances(:) >= 20 & cellDistances(:) <= 100);
+proximalPairIndices = find(cellDistances(:) >= binVector(1) & cellDistances(:) <= binVector(2));
 
 %find the indices of the distance bins
 for bIdx = 1:numBins
