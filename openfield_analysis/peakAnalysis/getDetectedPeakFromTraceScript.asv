@@ -1,0 +1,80 @@
+
+%%get peak in signal 
+cell = 12;
+cellPeaks = signalPeaks(cell, :); 
+peakIndices = find(cellPeaks == 1);
+cellTrace = cell_traces(cell, :);
+
+% Compute the global mean and standard deviation
+mu = mean(cellTrace);
+sigma = std(cellTrace);
+% Compute z-scores
+zScores = (cellTrace - mu) / sigma;
+
+%%
+
+idxIDX = 6;
+peakIdx = peakIndices(1, idxIDX);
+% Set a tolerance for what is considered "baseline" (z close to 0)
+tol = 1;  % adjust as needed
+windowLenOnset = 3;  % require 3 consecutive samples within tol
+windowLenOffset = 1; 
+% For plotting 
+pltRegion = 10;  % For example, 10 samples before and after the onset
+% --- Find onset ---
+% We search backward from peakIdx. We want to find the first window of length windowLen (ending before the peak)
+% where every sample has |z| < tol. We then define onset as the first index of that window.
+onsetIdx = [];
+for i = peakIdx:-1:windowLenOnset
+    if all(abs(zScores(i-windowLenOnset+1:i)) < tol)
+        onsetIdx = i - windowLenOnset + 1;
+        break;
+    end
+end
+if isempty(onsetIdx)
+    onsetIdx = 1;
+end
+% --- Find offset ---
+% Now search forward from the peak. We look for the first window of length windowLen
+% where every sample has |z| < tol, and define offset as the last index of that window.
+offsetIdx = [];
+N = length(zScores);
+for i = peakIdx:(N - windowLenOffset + 1)
+    if all(abs(zScores(i:i+windowLenOffset-1)) < tol)
+        offsetIdx = i + windowLenOffset - 1;
+        break;
+    end
+end
+if isempty(offsetIdx)
+    offsetIdx = N;
+end
+
+ampMax = max(cellTrace()); 
+
+% Ensure the clipping indices are within the trace boundaries
+clipStart = max(1, onsetIdx - pltRegion);
+clipEnd   = min(length(cellTrace), offsetIdx + pltRegion);
+% Extract the clipped region from the full trace
+clippedRegion = cellTrace(clipStart:clipEnd);
+
+% Plot the clipped region
+figure;
+plot(clipStart:clipEnd, clippedRegion, 'k-', 'LineWidth', 1.5);
+hold on;
+% Mark the onset on the clipped plot (onsetIdx is in the original indexing)
+plot(onsetIdx, cellTrace(onsetIdx), 'ro', 'MarkerFaceColor', 'r');
+plot(offsetIdx, cellTrace(offsetIdx), 'ro', 'MarkerFaceColor', 'b');
+xlabel('Index');
+ylabel('Signal Value');
+title('Clipped Region of Trace around Onset');
+legend('Clipped Signal', 'Onset','Location','Best');
+hold off;
+
+
+
+
+
+
+
+
+

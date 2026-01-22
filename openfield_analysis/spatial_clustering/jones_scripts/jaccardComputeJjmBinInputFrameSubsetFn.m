@@ -5,9 +5,9 @@ function [outputFileArray] = jaccardComputeJjmBinInputFrameSubsetFn(session, fra
     %Input: session, frameFileInput
     % peakThreshold
     % micronsPerPixel 2.5 = microns (inscopix), 1 (v3), 1.85 (v4)
-    % maxDist, 500 micron from Jones
-    % binSize, 50 micron from Jones
-    % bStart, 20 or 25 micron from Jones 
+    % maxDist, 500 micron 
+    % binSize, 50 micron
+    % bStart, 50 micron 
 
     %add path to data 
     addpath(genpath('F:\JJM\miniscope_analysis\clustering_analysis\')); 

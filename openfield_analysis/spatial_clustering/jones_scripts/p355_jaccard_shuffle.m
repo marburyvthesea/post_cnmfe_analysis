@@ -2,7 +2,6 @@ function [shiftedEventTrace, CellJaccards, ShuffledCellJaccards, normlBinnedCell
     normlShuffledBinnedCellJaccards, proximalPairIndices] = p355_jaccard_shuffle(paddedSignalPeaksInput, ...
     thisTreatmentFrames,thisMoveTypeFrames, cellXYcoords, numCells, cellDistances, numBins, binVector, type)
 
-%changed paddedSignalPeaks to paddedSignalPeaksInput -JJM
 
 %INPUTS:
 %1) numFrames
@@ -23,8 +22,7 @@ function [shiftedEventTrace, CellJaccards, ShuffledCellJaccards, normlBinnedCell
 %4) normlBinnedCellJaccards 
 %5) normlShuffledBinnedCellJaccards
 if type == 2 
-    %what does this do? -JJM 
-    %paddedSignalPeaks = cellTraces;
+
     paddedSignalPeaksInput = paddedSignalPeaksInput; 
 end
 %get also the padded event traces for rest and movement

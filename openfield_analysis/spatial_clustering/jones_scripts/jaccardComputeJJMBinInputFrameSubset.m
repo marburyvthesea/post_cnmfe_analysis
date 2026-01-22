@@ -9,14 +9,15 @@ addpath(genpath('\Users\scanimage\Documents\JJM\post_cnmfe_analysis\'));
 
 %session to load
 
-dir_path = 'F:\JJM\miniscope_analysis\clustering_analysis\';
-%session = 'DO_2_Day1_16_46_28';
-save_path = strcat(dir_path, 'frame_subset\' , erase(frameFileInput, '.csv') , '_');
+%dir_path = 'F:\JJM\miniscope_analysis\clustering_analysis\';
+dir_path = CNMFE_path; 
+session = 'Vehicle_DIO_r2.7_15_20_30';
+save_path = strcat(dir_path, 'peakAnalysis\');
 
 %load csv file with frame subset to test
-framesSubset = readtable(strcat(dir_path, 'frame_subset\', frameFileInput), 'ReadVariableNames', true); 
+%framesSubset = readtable(strcat(dir_path, 'frame_subset\', frameFileInput), 'ReadVariableNames', true); 
 
-
+%%
 %load filtered fluorescence traces from python output
 disp('loading data')
 cell_eg = readtable(strcat(dir_path,session,'_C_traces_filtered.csv'),'ReadVariableNames', true);
@@ -33,9 +34,7 @@ cellXYcoords = readtable(strcat(dir_path,session,'_com_filtered.csv'), 'ReadVari
 %remove 1st column, which is just index 
 size_array = size(cell_eg);
 
-numFramesToAnalyze = size(framesSubset);
-frameSubsetIndicies = table2array(framesSubset(:, 2));
-
+numFramesToAnalyze = 'all_frames';
 
 cell_traces = table2array(cell_eg(:,2:size_array(1,2)));
 %convert to nCells x nFrames matrix
@@ -49,6 +48,8 @@ disp('finding signal peaks')
 %in the PD paper, we pad each 'event' to make is 1-s duration. Note that we
 %no longer do this with our GCaMP7f data, but I would do it with GCaMP6
 %data. 
+
+%%
 
 disp('padding signal peaks')
 
